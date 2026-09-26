@@ -3,846 +3,598 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EarnX Pro - Advanced Secured P2P Escrow & Automated Gateway</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>EarnX Pro - Secured P2P Escrow Gateway</title>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root {
+            --primary: #0a3622;
+            --secondary: #ffb703;
+            --accent: #2b9348;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #212529;
+            --text-muted: #6c757d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 70px; }
+        
+        .top-banner { background: var(--primary); color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .secure-badge { background: var(--accent); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        
+        .container { max-width: 480px; margin: 0 auto; padding: 15px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
+        
+        h2 { color: var(--primary); margin-bottom: 15px; font-size: 20px; text-align: center; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--primary); }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; }
+        
+        .btn { width: 100%; padding: 12px; background: var(--secondary); border: none; border-radius: 6px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; margin-top: 10px; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .nav-tab { flex: 1; padding: 10px; text-align: center; background: #e9ecef; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .nav-tab.active { background: var(--primary); color: #fff; }
+        
+        .wallet-card { background: linear-gradient(135deg, #0a3622, #1b4d3e); color: #fff; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .wallet-balance { font-size: 28px; font-weight: bold; margin: 5px 0; }
+        
+        .grid-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+        .menu-item { background: #fff; padding: 12px 5px; text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        
+        .order-item { background: #f8f9fa; border-left: 4px solid var(--accent); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #ddd; z-index: 99; }
+        .footer-item { text-align: center; font-size: 11px; color: var(--text-muted); cursor: pointer; }
+        .footer-item.active { color: var(--primary); font-weight: bold; }
+        
+        .telegram-float { position: fixed; right: 20px; bottom: 75px; background: #0088cc; color: #fff; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 98; cursor: pointer; }
+        
+        .hidden { display: none !important; }
+        .stat-box { background: #e9ecef; padding: 10px; border-radius: 6px; text-align: center; font-size: 14px; margin-bottom: 10px; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+<body>
 
-    <!-- Top Header -->
-    <header class="bg-emerald-900 text-white shadow-md">
-        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="bg-emerald-700 text-xs px-2 py-1 rounded font-semibold">256-bit Encrypted Node</span>
-                <h1 class="font-bold text-lg tracking-wide">EarnX Pro</h1>
-            </div>
-            <div>
-                <a href="https://t.me/+byjidIDYoqZiNzll" target="_blank" class="bg-amber-500 text-emerald-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow">Support</a>
-            </div>
-        </div>
-    </header>
+    <div class="top-banner">
+        <span>🔒 256-bit Encrypted Node</span>
+        <span class="secure-badge">EarnX Pro</span>
+    </div>
 
-    <!-- Main Container -->
-    <main class="max-w-md w-full mx-auto p-4 flex-grow flex flex-col justify-center">
-        
-        <!-- Toast Notification -->
-        <div id="toast" class="hidden mb-4 p-3 rounded-lg text-sm text-center font-medium shadow-sm"></div>
-
-        <!-- AUTH VIEW -->
-        <div id="auth-view" class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-            <div class="text-center mb-6">
-                <div class="inline-block bg-emerald-900 text-white font-bold text-xl px-4 py-2 rounded-xl shadow mb-2">EarnX Pro</div>
-                <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Military-Grade Secured P2P Gateway</p>
-            </div>
-
-            <!-- Tabs -->
-            <div id="auth-tabs" class="flex bg-gray-100 p-1 rounded-xl mb-6">
-                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-emerald-900 transition">Login</button>
-                <button onclick="switchAuthTab('signup')" id="tab-signup" class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 transition">Sign Up</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mobile Number or User ID</label>
-                    <input type="text" id="login-identifier" required placeholder="Enter 10-digit mobile" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
-                    <input type="password" id="login-password" required placeholder="Enter password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <div class="text-right">
-                    <button type="button" onclick="switchAuthTab('forgot')" class="text-xs text-emerald-700 font-semibold hover:underline">Forgot Password?</button>
-                </div>
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-emerald-950 font-bold py-3 rounded-xl shadow-md transition">Secure Login</button>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mobile Number</label>
-                    <input type="text" id="signup-mobile" required placeholder="Enter 10-digit mobile" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Create Password</label>
-                    <input type="password" id="signup-password" required placeholder="Create secure password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-xs text-amber-800 text-center font-medium">
-                    🛡️ Protected with Advanced Anti-Bot & Anti-Hack Firewall.
-                </div>
-                <button type="submit" class="w-full bg-emerald-900 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md transition">Register Protected Account</button>
-            </form>
-
-            <!-- Forgot Password Form -->
-            <form id="forgot-form" onsubmit="handleForgotPassword(event)" class="space-y-4 hidden">
-                <div class="text-center mb-2">
-                    <h3 class="font-bold text-sm text-emerald-900">Reset Account Password</h3>
-                    <p class="text-[11px] text-gray-500">Enter registered mobile number and set new password.</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Registered Mobile Number</label>
-                    <input type="text" id="forgot-mobile" required placeholder="Enter 10-digit mobile" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">New Password</label>
-                    <input type="password" id="forgot-new-password" required placeholder="Enter new secure password" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-700 text-sm">
-                </div>
-                <button type="submit" class="w-full bg-emerald-900 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md transition">Update Password Securely</button>
-                <div class="text-center">
-                    <button type="button" onclick="switchAuthTab('login')" class="text-xs text-gray-600 hover:underline">Back to Login</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- DASHBOARD VIEW (User) -->
-        <div id="dashboard-view" class="hidden space-y-4">
-            <div class="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white rounded-2xl p-5 shadow-lg">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs text-emerald-300 uppercase tracking-wider">Wallet Balance (INR)</p>
-                        <h2 class="text-3xl font-bold mt-1">₹<span id="user-balance">0.00</span></h2>
-                    </div>
-                    <button onclick="logout()" class="bg-emerald-950/60 hover:bg-emerald-950 text-xs px-3 py-1.5 rounded-lg border border-emerald-700 transition">Logout</button>
-                </div>
-                <div class="mt-4 pt-4 border-t border-emerald-700/60 flex justify-between text-xs text-emerald-200">
-                    <span>ID: <strong id="lbl-userid" class="text-white"></strong></span>
-                    <span>Firewall: <strong class="text-amber-400">Active (Anti-Hack)</strong></span>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="switchUserTab('orders')" class="bg-emerald-900 text-white p-3 rounded-xl shadow-sm text-center font-semibold text-xs">
-                    📦 Live Rotating Orders
-                </button>
-                <button onclick="switchUserTab('home')" class="bg-white border border-gray-200 p-3 rounded-xl shadow-sm text-center font-semibold text-emerald-900 text-xs">
-                    ⚙️ UPI / Status
-                </button>
-            </div>
-
-            <!-- TAB 1: HOME / ACTIVE ORDER & UPI MANAGEMENT -->
-            <div id="user-tab-home" class="space-y-3">
-                <!-- UPI Setup Section (Max 4 UPI IDs strictly) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 space-y-3">
-                    <h3 class="font-bold text-emerald-900 text-sm">🔗 Max 4 UPI IDs Setup (Encrypted)</h3>
-                    <p class="text-[11px] text-gray-500">Aap yahan maximum 4 UPI IDs add kar sakte hain. Inhi 4 UPI IDs par aapka withdrawal aur deposit route hoga.</p>
-                    <form onsubmit="handleUpiBinding(event)" class="space-y-2 text-xs">
-                        <input type="text" id="bind-name" placeholder="Account Holder Name" required class="w-full px-3 py-2 border rounded-xl">
-                        <input type="text" id="bind-upi1" placeholder="UPI ID 1 (e.g. mobile@paytm)" required class="w-full px-3 py-2 border rounded-xl">
-                        <input type="text" id="bind-upi2" placeholder="UPI ID 2 (Optional)" class="w-full px-3 py-2 border rounded-xl">
-                        <input type="text" id="bind-upi3" placeholder="UPI ID 3 (Optional)" class="w-full px-3 py-2 border rounded-xl">
-                        <input type="text" id="bind-upi4" placeholder="UPI ID 4 (Optional)" class="w-full px-3 py-2 border rounded-xl">
-                        <button type="submit" class="w-full bg-emerald-900 text-white py-2 rounded-xl font-bold">Save Secure UPI Profile</button>
-                    </form>
-                </div>
-
-                <!-- Active Order Status -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 space-y-3">
-                    <h3 class="font-bold text-emerald-900 text-sm">📦 Active Order Status</h3>
-                    <div id="active-order-box" class="text-xs text-gray-500">
-                        <p>No active order in progress.</p>
-                    </div>
-                </div>
-
-                <!-- User Personal Transaction History -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 space-y-3">
-                    <h3 class="font-bold text-emerald-900 text-sm">📜 My Deposit & Withdrawal History</h3>
-                    <div id="user-tx-history" class="space-y-2 text-xs">
-                        <p class="text-gray-400 text-center py-2">No transactions recorded yet.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: LIVE ROTATING ORDERS -->
-            <div id="user-tab-orders" class="hidden space-y-3">
-                <div class="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-[11px] text-blue-800 text-center font-medium">
-                    ⚡ Orders are concurrency-locked and protected against race conditions and bot scraping.
-                </div>
-                <div id="live-orders-container" class="space-y-3 max-h-80 overflow-y-auto text-xs">
-                    <!-- Dynamic Live Orders Generated Here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ADMIN PANEL VIEW -->
-        <div id="admin-view" class="hidden space-y-4">
-            <div class="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white rounded-2xl p-5 shadow-lg flex justify-between items-center">
-                <div>
-                    <p class="text-xs text-amber-400 uppercase tracking-wider font-bold">Admin Escrow Safe Wallet</p>
-                    <h2 class="text-xl font-bold mt-1">Pool: ₹<span id="admin-wallet-balance">0.00</span></h2>
-                </div>
-                <button onclick="logout()" class="bg-emerald-950/60 hover:bg-emerald-950 text-xs px-3 py-1.5 rounded-lg border border-emerald-700 transition">Logout</button>
-            </div>
-
-            <!-- Admin Stats Overview -->
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                <div class="bg-white p-3 rounded-xl border shadow-sm">
-                    <p class="text-gray-500">Total Users</p>
-                    <h4 class="font-bold text-emerald-900 text-base mt-1" id="stat-total-users">0</h4>
-                </div>
-                <div class="bg-white p-3 rounded-xl border shadow-sm">
-                    <p class="text-gray-500">Pending Proofs</p>
-                    <h4 class="font-bold text-amber-800 text-base mt-1" id="stat-pending-vouchers">0</h4>
-                </div>
-                <div class="bg-white p-3 rounded-xl border shadow-sm">
-                    <p class="text-gray-500">Gateway UPI</p>
-                    <h4 class="font-bold text-emerald-900 text-xs mt-1 truncate" id="stat-admin-upi">Default</h4>
-                </div>
-            </div>
-
-            <!-- Admin Gateway UPI Management -->
-            <div class="bg-white rounded-2xl shadow-sm border border-emerald-300 p-4 space-y-3">
-                <h3 class="font-bold text-emerald-900 text-sm">⚡ Default Admin Gateway UPI</h3>
-                <div class="space-y-2 text-xs">
-                    <input type="text" id="admin-edit-upi" placeholder="e.g. escrow.admin@ptyes" class="w-full px-3 py-2 border rounded-xl">
-                    <button onclick="updateAdminUpiGateway()" class="w-full bg-emerald-900 text-white py-2 rounded-xl font-bold">Update Admin UPI</button>
-                </div>
-            </div>
-
-            <!-- Real Payments & Deposit History strictly for Admin -->
-            <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 p-4">
-                <h3 class="font-bold text-emerald-900 text-sm mb-3">📥 Real Payment History & Pending Vouchers</h3>
-                <div id="admin-deposits-list" class="space-y-3 text-xs">
-                    <p class="text-gray-500 text-center py-2">No pending verification vouchers.</p>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Secure Payment App Gateway Modal -->
-    <div id="deposit-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 text-xs max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-emerald-900 text-sm">Official UPI App Payment Gateway</h3>
-                <button onclick="closeModal('deposit-modal')" class="text-gray-500 font-bold text-sm">✕</button>
+    <div class="container">
+        <!-- AUTH SECTION -->
+        <div id="authSection" class="card">
+            <h2>EarnX Pro Gateway</h2>
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="switchAuth('login')">Login</div>
+                <div class="nav-tab" onclick="switchAuth('signup')">Sign Up</div>
             </div>
             
-            <!-- Timer Display -->
-            <div class="bg-red-50 border border-red-200 p-2.5 rounded-xl text-center text-red-700 font-bold">
-                ⏱️ Order Hold Timer: <span id="deposit-timer">12:00</span>
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Mobile Number or User ID</label>
+                    <input type="text" id="loginId" placeholder="Enter 10-digit mobile">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter password">
+                </div>
+                <button class="btn btn-primary" onclick="handleLogin()">Secure Login</button>
             </div>
 
-            <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-amber-900 text-[11px] font-medium leading-relaxed">
-                🔒 <strong>Secured Firewall Escrow:</strong> Encrypted payment routing.
+            <div id="signupForm" class="hidden">
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="text" id="signupPhone" placeholder="Enter 10-digit mobile">
+                </div>
+                <div class="form-group">
+                    <label>Create Password</label>
+                    <input type="password" id="signupPass" placeholder="Create password">
+                </div>
+                <div class="form-group">
+                    <label>Referral Code (Optional)</label>
+                    <input type="text" id="signupRef" placeholder="Referral code if any">
+                </div>
+                <button class="btn btn-primary" onclick="handleSignup()">Register Account</button>
             </div>
+        </div>
 
-            <div class="bg-gray-50 p-3 rounded-xl border space-y-1">
-                <p><strong>Order Amount:</strong> ₹<span id="modal-plan-amt">0</span></p>
-                <p><strong>Target Recipient UPI:</strong> <span id="modal-target-upi" class="text-emerald-800 font-mono font-bold"></span></p>
-                <p id="modal-recipient-label" class="text-[10px] text-gray-500"></p>
-            </div>
-
-            <!-- Secure UPI App Options -->
-            <div class="space-y-2">
-                <label class="block font-bold text-gray-700">Select Secure UPI App to Pay</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="triggerUpiApp('Paytm')" class="p-2 border rounded-xl bg-blue-50 text-blue-900 font-bold flex items-center justify-center space-x-1"><span>📱 Paytm</span></button>
-                    <button onclick="triggerUpiApp('PhonePe')" class="p-2 border rounded-xl bg-purple-50 text-purple-900 font-bold flex items-center justify-center space-x-1"><span>📱 PhonePe</span></button>
-                    <button onclick="triggerUpiApp('GooglePay')" class="p-2 border rounded-xl bg-green-50 text-green-900 font-bold flex items-center justify-center space-x-1"><span>📱 Google Pay</span></button>
-                    <button onclick="triggerUpiApp('MobiKwik')" class="p-2 border rounded-xl bg-amber-50 text-amber-900 font-bold flex items-center justify-center space-x-1"><span>📱 MobiKwik</span></button>
+        <!-- USER DASHBOARD -->
+        <div id="userDashboard" class="hidden">
+            <div class="wallet-card">
+                <div style="font-size: 13px; opacity: 0.8;">WALLET BALANCE (INR)</div>
+                <div class="wallet-balance" id="userWalletBal">₹0.00</div>
+                <div style="font-size: 11px; display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span id="displayUserId">ID: --</span>
+                    <span style="color: #2b9348; font-weight: bold;">Firewall: Active (Anti-Hack)</span>
                 </div>
             </div>
 
-            <!-- UTR & Screenshot Proof Form -->
-            <form onsubmit="submitDepositProof(event)" class="space-y-2 pt-2 border-t">
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1">Enter UTR / Transaction ID (Required)</label>
-                    <input type="text" id="proof-utr" placeholder="e.g. 128936359" required class="w-full px-3 py-2 border rounded-xl">
+            <div class="grid-menu">
+                <div class="menu-item" onclick="switchTab('deposit')">💳 Deposit</div>
+                <div class="menu-item" onclick="switchTab('orders')">📦 Orders</div>
+                <div class="menu-item" onclick="switchTab('upiManager')">🔗 Link UPI</div>
+                <div class="menu-item" onclick="switchTab('team')">👥 Team</div>
+            </div>
+
+            <div id="tabContent"></div>
+        </div>
+
+        <!-- ADMIN PANEL -->
+        <div id="adminPanel" class="hidden">
+            <div class="card">
+                <h2>👑 Admin Escrow Control Panel</h2>
+                <button class="btn" style="background:#dc3545; color:#fff; margin-bottom:15px;" onclick="handleLogout()">Admin Logout</button>
+                
+                <div id="adminStatsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
+
+                <h3 style="margin-top: 15px; font-size:16px;">➕ Admin Create Custom Order</h3>
+                <div style="background:#f8f9fa; padding:12px; border-radius:8px; margin-top:8px;">
+                    <div class="form-group">
+                        <label>Order Amount (INR)</label>
+                        <input type="number" id="adminOrderAmt" placeholder="e.g. 500">
+                    </div>
+                    <div class="form-group">
+                        <label>Target UPI ID</label>
+                        <input type="text" id="adminOrderUpi" placeholder="e.g. user@paytm">
+                    </div>
+                    <div class="form-group">
+                        <label>Holder Name</label>
+                        <input type="text" id="adminOrderHolder" placeholder="Account Holder Name">
+                    </div>
+                    <button class="btn btn-primary" onclick="adminCreateOrder()">Publish Order to Pool</button>
                 </div>
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1">Upload Payment Screenshot Proof</label>
-                    <input type="file" id="proof-file" accept="image/*" required class="w-full px-2 py-1.5 border rounded-xl bg-white text-[11px]">
-                </div>
-                <div class="flex space-x-2 pt-2">
-                    <button type="submit" class="flex-1 bg-emerald-900 text-white py-2.5 rounded-xl font-bold">Submit Verification</button>
-                    <button type="button" onclick="closeModal('deposit-modal')" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl">Cancel</button>
-                </div>
-            </form>
+
+                <h3 style="margin-top: 20px; font-size:16px;">Pending Deposits & UTR Verifications</h3>
+                <div id="adminPendingList" style="margin-top: 10px;"></div>
+
+                <h3 style="margin-top: 20px; font-size:16px;">👥 All Users & Real Balances</h3>
+                <div id="adminUsersList" style="margin-top: 10px; font-size: 13px;"></div>
+
+                <h3 style="margin-top: 20px; font-size:16px;">All Platform Transactions Audit</h3>
+                <div id="adminAuditList" style="margin-top: 10px; font-size: 13px;"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="text-center py-4 text-xs text-gray-500">
-        &copy; 2026 EarnX Pro Secure Escrow Gateway. All rights reserved.
-    </footer>
+    <!-- FLOATING TELEGRAM SUPPORT -->
+    <div class="telegram-float" onclick="openTelegramSupport()">📢</div>
 
-    <!-- Script Logic with Advanced Anti-Hack & Security Firewall -->
+    <!-- FOOTER NAV FOR USERS -->
+    <div id="userFooter" class="footer-nav hidden">
+        <div class="footer-item active" onclick="switchTab('home')">🏠 Home</div>
+        <div class="footer-item" onclick="switchTab('deposit')">💳 Deposit</div>
+        <div class="footer-item" onclick="switchTab('orders')">📦 Orders</div>
+        <div class="footer-item" onclick="switchTab('team')">👥 Team</div>
+        <div class="footer-item" onclick="handleLogout()">🚪 Logout</div>
+    </div>
+
+    <!-- TELEGRAM MODAL POPUP -->
+    <div id="tgModal" class="modal hidden">
+        <div class="modal-content" style="text-align: center;">
+            <h2>Official Telegram Update</h2>
+            <p style="margin: 15px 0; font-size: 14px;">Join our official channels for instant updates, proofs, and support!</p>
+            <button class="btn btn-primary" onclick="window.open('https://t.me/+byjidIDYoqZiNzll', '_blank')">Join Main Channel</button>
+            <button class="btn" style="background:#17a2b8; color:#fff;" onclick="window.open('https://t.me/xNekWyb88xtmNThl', '_blank')">Support Channel</button>
+            <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeTgModal()">Proceed to App</button>
+        </div>
+    </div>
+
     <script>
-        let countdownInterval = null;
-        let rotatingOrderInterval = null;
-        let activeOrderData = null;
-        const DEFAULT_ADMIN_UPI = "escrow.admin@ptyes";
-
-        // ================= ADVANCED SECURITY & ANTI-HACK FIREWALL =================
-
-        // 1. Sanitize Inputs against XSS / SQL Injection
-        function sanitizeInput(str) {
-            if (typeof str !== 'string') return str;
-            return str.replace(/[<>]/g, '').trim();
-        }
-
-        // 2. Generate Cryptographic Session Token (CSRF / Anti-Bot protection)
-        function generateSecureToken() {
-            let token = 'EARNX_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-            sessionStorage.setItem('csrf_token', token);
-            return token;
-        }
-
-        // 3. Brute Force Login Attempt Limiter
-        let loginAttempts = 0;
-        let lockoutTime = 0;
-
-        function checkRateLimit() {
-            let now = Date.now();
-            if (loginAttempts >= 5) {
-                if (now < lockoutTime) {
-                    let remainingSecs = Math.ceil((lockoutTime - now) / 1000);
-                    showToast(`Too many failed attempts! Try again in ${remainingSecs} seconds.`, true);
-                    return false;
-                } else {
-                    loginAttempts = 0; // Reset after timeout
-                }
-            }
-            return true;
-        }
-
-        function initStorage() {
-            try {
-                if (!localStorage.getItem('users')) {
-                    const adminUser = {
-                        mobile: '7071088675',
-                        password: 'adminpassword123',
-                        balance: 0.00,
-                        role: 'admin',
-                        upiList: [DEFAULT_ADMIN_UPI],
-                        name: 'Admin Escrow'
-                    };
-                    const sampleUser = {
-                        mobile: '9876543210',
-                        password: 'user123',
-                        balance: 500.00,
-                        role: 'user',
-                        upiList: ['user1@paytm', 'user1@ybl'],
-                        name: 'Ramesh Kumar'
-                    };
-                    localStorage.setItem('users', JSON.stringify([adminUser, sampleUser]));
-                }
-                if (!localStorage.getItem('adminUpi')) {
-                    localStorage.setItem('adminUpi', DEFAULT_ADMIN_UPI);
-                }
-                if (!localStorage.getItem('depositRequests')) {
-                    localStorage.setItem('depositRequests', JSON.stringify([]));
-                }
-                if (!sessionStorage.getItem('csrf_token')) {
-                    generateSecureToken();
-                }
-            } catch (err) {
-                localStorage.clear();
-                initStorage();
-            }
-        }
-        initStorage();
-
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            if(!toast) return;
-            toast.innerText = message;
-            toast.className = `mb-4 p-3 rounded-lg text-sm text-center font-medium shadow-sm ${isError ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3500);
-        }
-
-        function switchAuthTab(tab) {
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const forgotForm = document.getElementById('forgot-form');
-            const authTabs = document.getElementById('auth-tabs');
-
-            loginForm.classList.add('hidden');
-            signupForm.classList.add('hidden');
-            forgotForm.classList.add('hidden');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                authTabs.classList.remove('hidden');
-                document.getElementById('tab-login').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-emerald-900 transition';
-                document.getElementById('tab-signup').className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 transition';
-            } else if (tab === 'signup') {
-                signupForm.classList.remove('hidden');
-                authTabs.classList.remove('hidden');
-                document.getElementById('tab-signup').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-emerald-900 transition';
-                document.getElementById('tab-login').className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 transition';
-            } else if (tab === 'forgot') {
-                forgotForm.classList.remove('hidden');
-                authTabs.classList.add('hidden');
-            }
-        }
-
-        function switchUserTab(tabName) {
-            const homeTab = document.getElementById('user-tab-home');
-            const ordersTab = document.getElementById('user-tab-orders');
-            if (tabName === 'home') {
-                homeTab.classList.remove('hidden');
-                ordersTab.classList.add('hidden');
-                if(rotatingOrderInterval) clearInterval(rotatingOrderInterval);
-                renderUserActiveOrder();
-                renderUserTransactions();
-            } else {
-                homeTab.classList.add('hidden');
-                ordersTab.classList.remove('hidden');
-                generateLiveRotatingOrders();
-                if(rotatingOrderInterval) clearInterval(rotatingOrderInterval);
-                rotatingOrderInterval = setInterval(generateLiveRotatingOrders, 5000);
-            }
-        }
-
-        function handleSignup(e) {
-            e.preventDefault();
-            const mobile = sanitizeInput(document.getElementById('signup-mobile').value);
-            const password = document.getElementById('signup-password').value;
-
-            if(!/^\d{10}$/.test(mobile)) {
-                showToast('Please enter a valid 10-digit mobile number!', true);
-                return;
-            }
-
-            let users = JSON.parse(localStorage.getItem('users'));
-            if (users.some(u => u.mobile === mobile)) {
-                showToast('Mobile number already registered!', true);
-                return;
-            }
-
-            const newUser = { mobile, password, balance: 0.00, role: 'user', upiList: [], name: 'User ' + mobile };
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
-            generateSecureToken();
-            showToast('Registration successful & secured!');
-            loadDashboard();
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            if (!checkRateLimit()) return;
-
-            const identifier = sanitizeInput(document.getElementById('login-identifier').value);
-            const password = document.getElementById('login-password').value;
-
-            let users = JSON.parse(localStorage.getItem('users'));
-            const user = users.find(u => u.mobile === identifier && u.password === password);
-            
-            if (!user) {
-                loginAttempts++;
-                if (loginAttempts >= 5) {
-                    lockoutTime = Date.now() + 30000; // 30 seconds lockout
-                }
-                showToast(`Invalid credentials! Attempt ${loginAttempts}/5`, true);
-                return;
-            }
-
-            loginAttempts = 0; // reset on successful login
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            generateSecureToken();
-            loadDashboard();
-        }
-
-        function handleForgotPassword(e) {
-            e.preventDefault();
-            const mobile = sanitizeInput(document.getElementById('forgot-mobile').value);
-            const newPassword = document.getElementById('forgot-new-password').value;
-
-            let users = JSON.parse(localStorage.getItem('users'));
-            let user = users.find(u => u.mobile === mobile);
-            if (!user) {
-                showToast('Mobile number not found!', true);
-                return;
-            }
-
-            user.password = newPassword;
-            localStorage.setItem('users', JSON.stringify(users));
-            showToast('Password updated securely! Please login.');
-            switchAuthTab('login');
-        }
-
-        function loadDashboard() {
-            let users = JSON.parse(localStorage.getItem('users'));
-            let currentUserData = JSON.parse(localStorage.getItem('currentUser'));
-            if(!currentUserData) return;
-            let user = users.find(u => u.mobile === currentUserData.mobile);
-            if(!user) return;
-            localStorage.setItem('currentUser', JSON.stringify(user));
-
-            document.getElementById('auth-view').classList.add('hidden');
-
-            if (user.role === 'admin') {
-                document.getElementById('dashboard-view').classList.add('hidden');
-                document.getElementById('admin-view').classList.remove('hidden');
-                renderAdminPanel();
-            } else {
-                document.getElementById('admin-view').classList.add('hidden');
-                document.getElementById('dashboard-view').classList.remove('hidden');
-                document.getElementById('user-balance').innerText = user.balance.toFixed(2);
-                document.getElementById('lbl-userid').innerText = user.mobile;
-                switchUserTab('home');
-
-                if (user.upiList && user.upiList.length > 0) {
-                    document.getElementById('bind-upi1').value = user.upiList[0] || '';
-                    document.getElementById('bind-upi2').value = user.upiList[1] || '';
-                    document.getElementById('bind-upi3').value = user.upiList[2] || '';
-                    document.getElementById('bind-upi4').value = user.upiList[3] || '';
-                }
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('csrf_token');
-            if(rotatingOrderInterval) clearInterval(rotatingOrderInterval);
-            document.getElementById('dashboard-view').classList.add('hidden');
-            document.getElementById('admin-view').classList.add('hidden');
-            document.getElementById('auth-view').classList.remove('hidden');
-            showToast('Logged out securely.');
-        }
-
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { 
-            document.getElementById(id).classList.add('hidden'); 
-            if(countdownInterval) clearInterval(countdownInterval);
-        }
-
-        function handleUpiBinding(e) {
-            e.preventDefault();
-            let user = JSON.parse(localStorage.getItem('currentUser'));
-            let name = sanitizeInput(document.getElementById('bind-name').value);
-            let u1 = sanitizeInput(document.getElementById('bind-upi1').value);
-            let u2 = sanitizeInput(document.getElementById('bind-upi2').value);
-            let u3 = sanitizeInput(document.getElementById('bind-upi3').value);
-            let u4 = sanitizeInput(document.getElementById('bind-upi4').value);
-
-            let upiList = [u1, u2, u3, u4].filter(Boolean);
-            if (upiList.length > 4) {
-                showToast('Maximum 4 UPI IDs allowed!', true);
-                return;
-            }
-
-            user.name = name;
-            user.upiList = upiList;
-            updateCurrentUser(user);
-            showToast('Up to 4 UPI IDs saved securely!');
-        }
-
-        // ================= CONCURRENCY PROTECTED LIVE ORDER GENERATOR =================
-        function generateLiveRotatingOrders() {
-            let users = JSON.parse(localStorage.getItem('users') || '[]');
-            let currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            const container = document.getElementById('live-orders-container');
-
-            let lockedUserMobiles = depositRequests.filter(d => d.status === 'Pending').map(d => d.mobile);
-            let eligibleUsers = users.filter(u => u.role !== 'admin' && u.balance > 0 && u.mobile !== currentUser.mobile && !lockedUserMobiles.includes(u.mobile));
-
-            let orderListHTML = '';
-
-            if (eligibleUsers.length > 0) {
-                eligibleUsers.forEach(u => {
-                    let totalBal = u.balance;
-                    let chunkSize = 100;
-                    let parts = Math.ceil(totalBal / chunkSize);
-                    let targetUpi = (u.upiList && u.upiList.length > 0) ? u.upiList[0] : u.mobile + '@paytm';
-
-                    for (let i = 1; i <= Math.min(parts, 3); i++) {
-                        let amount = (i === parts && totalBal % chunkSize !== 0) ? (totalBal % chunkSize) : chunkSize;
-                        orderListHTML += `
-                            <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
-                                <div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-bold text-emerald-900 text-sm">Escrow Order</span>
-                                        <span class="font-bold text-base text-emerald-700">₹${amount}</span>
-                                    </div>
-                                    <p class="text-[11px] text-gray-500 mt-1">Target User: <strong class="text-gray-700">${u.name}</strong></p>
-                                    <p class="text-[10px] text-amber-700">UPI: ${targetUpi}</p>
-                                </div>
-                                <button onclick="takeP2POrder(${amount}, '${targetUpi}', '${u.name} (${u.mobile})', '${u.mobile}')" class="bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl font-bold text-xs shadow">
-                                    Take Order
-                                </button>
-                            </div>
-                        `;
-                    }
-                });
-            } else {
-                let adminUpi = localStorage.getItem('adminUpi') || DEFAULT_ADMIN_UPI;
-                orderListHTML = `
-                    <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center">
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="font-bold text-emerald-900 text-sm">Admin Node Order</span>
-                                <span class="font-bold text-base text-emerald-700">₹100</span>
-                            </div>
-                            <p class="text-[11px] text-gray-500 mt-1">Direct System Escrow</p>
-                            <p class="text-[10px] text-amber-700">UPI: ${adminUpi}</p>
-                        </div>
-                        <button onclick="takeP2POrder(100, '${adminUpi}', 'Admin Gateway', 'ADMIN')" class="bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl font-bold text-xs shadow">
-                            Take Order
-                        </button>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = orderListHTML;
-        }
-
-        function takeP2POrder(amount, targetUpi, recipientLabel, targetMobile) {
-            let currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            
-            let existingActive = depositRequests.find(d => d.mobile === currentUser.mobile && d.status === 'Pending');
-            if (existingActive) {
-                showToast('Aapka ek order pehle se pending hai!', true);
-                return;
-            }
-
-            activeOrderData = { amount, targetUpi, recipientLabel, targetMobile };
-            document.getElementById('modal-plan-amt').innerText = amount;
-            document.getElementById('modal-target-upi').innerText = targetUpi;
-            document.getElementById('modal-recipient-label').innerText = `To: ${recipientLabel}`;
-            document.getElementById('proof-utr').value = '';
-            document.getElementById('proof-file').value = '';
-
-            openModal('deposit-modal');
-            startCountdown(12 * 60);
-        }
-
-        function triggerUpiApp(appName) {
-            let upiId = document.getElementById('modal-target-upi').innerText;
-            let amt = activeOrderData.amount;
-            let upiSchemeUrl = `upi://pay?pa=${upiId}&pn=EarnXPro&am=${amt}&cu=INR`;
-            
-            showToast(`Opening secure ${appName}...`);
-            setTimeout(() => {
-                window.location.href = upiSchemeUrl;
-            }, 800);
-        }
-
-        function startCountdown(duration) {
-            let timer = duration, minutes, seconds;
-            const display = document.getElementById('deposit-timer');
-            if (countdownInterval) clearInterval(countdownInterval);
-
-            countdownInterval = setInterval(function () {
-                minutes = parseInt(timer / 60, 10);
-                seconds = parseInt(timer % 60, 10);
-
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-
-                display.textContent = minutes + ":" + seconds;
-
-                if (--timer < 0) {
-                    clearInterval(countdownInterval);
-                    display.textContent = "Expired!";
-                    showToast('Order expired!', true);
-                    closeModal('deposit-modal');
-                }
-            }, 1000);
-        }
-
-        function submitDepositProof(e) {
-            e.preventDefault();
-            const utr = sanitizeInput(document.getElementById('proof-utr').value);
-            const fileInput = document.getElementById('proof-file');
-            let currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-            if (!utr) {
-                showToast('Please enter UTR or Transaction ID!', true);
-                return;
-            }
-
-            let fileName = fileInput.files.length > 0 ? fileInput.files[0].name : 'screenshot.jpg';
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            
-            const newRequest = {
-                id: Date.now(),
-                mobile: currentUser.mobile,
-                amount: activeOrderData.amount,
-                targetUpi: activeOrderData.targetUpi,
-                recipientLabel: activeOrderData.recipientLabel,
-                targetMobile: activeOrderData.targetMobile,
-                utr: utr,
-                name: currentUser.name || currentUser.mobile,
-                userUpi: (currentUser.upiList && currentUser.upiList.length > 0) ? currentUser.upiList[0] : currentUser.mobile,
-                proofFile: fileName,
-                status: 'Pending',
-                date: new Date().toLocaleString()
-            };
-
-            depositRequests.push(newRequest);
-            localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
-
-            closeModal('deposit-modal');
-            showToast('Encrypted proof submitted successfully!');
-            switchUserTab('home');
-        }
-
-        function renderUserActiveOrder() {
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            let currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            const activeBox = document.getElementById('active-order-box');
-
-            let userPending = depositRequests.find(d => d.mobile === currentUser.mobile && d.status === 'Pending');
-
-            if (!userPending) {
-                activeBox.innerHTML = '<p class="text-gray-500">No active order in progress.</p>';
-            } else {
-                activeBox.innerHTML = `
-                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl space-y-1">
-                        <p class="font-bold text-amber-900">Order Amount: ₹${userPending.amount}</p>
-                        <p class="text-gray-600">UTR / TxID: <span class="font-mono font-bold">${userPending.utr}</span></p>
-                        <p class="text-amber-700 font-semibold">Status: Admin Verification & Matching Pending</p>
-                    </div>
-                `;
-            }
-        }
-
-        // USER PANEL: Only shows user's own deposits and withdrawals strictly
-        function renderUserTransactions() {
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            let currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            const container = document.getElementById('user-tx-history');
-
-            let userRequests = depositRequests.filter(d => d.mobile === currentUser.mobile);
-            if (userRequests.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-center py-2">No deposit or withdrawal history yet.</p>';
-            } else {
-                container.innerHTML = userRequests.reverse().map(d => `
-                    <div class="bg-gray-50 border p-2.5 rounded-xl flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-gray-800">Deposit Order: ₹${d.amount}</p>
-                            <p class="text-[10px] text-gray-500">UTR: ${d.utr} | ${d.date}</p>
-                        </div>
-                        <span class="px-2 py-1 rounded text-[10px] font-bold ${d.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : d.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}">${d.status}</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // ================= ADMIN PANEL MATCHING & +4.2% ADD LOGIC =================
-        function renderAdminPanel() {
-            let users = JSON.parse(localStorage.getItem('users') || '[]');
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            let admin = users.find(u => u.role === 'admin');
-            
-            if(admin) document.getElementById('admin-wallet-balance').innerText = admin.balance.toFixed(2);
-            let currentAdminUpi = localStorage.getItem('adminUpi') || DEFAULT_ADMIN_UPI;
-            document.getElementById('stat-admin-upi').innerText = currentAdminUpi;
-
-            const normalUsers = users.filter(u => u.role !== 'admin');
-            const pendingDeposits = depositRequests.filter(d => d.status === 'Pending');
-            
-            document.getElementById('stat-total-users').innerText = normalUsers.length;
-            document.getElementById('stat-pending-vouchers').innerText = pendingDeposits.length;
-
-            const depositContainer = document.getElementById('admin-deposits-list');
-            if (pendingDeposits.length === 0) {
-                depositContainer.innerHTML = '<p class="text-gray-500 text-center py-2.5">No pending verification vouchers.</p>';
-            } else {
-                depositContainer.innerHTML = pendingDeposits.map(d => `
-                    <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl space-y-1.5 shadow-sm">
-                        <div class="flex justify-between font-bold text-gray-800">
-                            <span>Sender: ${d.name} (${d.mobile})</span>
-                            <span class="text-emerald-800 text-sm">₹${d.amount}</span>
-                        </div>
-                        <p class="text-gray-600">Paid To: ${d.recipientLabel} (${d.targetUpi})</p>
-                        <p class="text-gray-700 font-mono">UTR / TxID: <strong class="text-amber-800">${d.utr}</strong></p>
-                        <p class="text-[11px] text-blue-700">Proof Screenshot: <strong class="underline">${d.proofFile}</strong></p>
-                        <div class="flex space-x-2 pt-2">
-                            <button onclick="approveAdminMatch(${d.id})" class="flex-1 bg-emerald-900 text-white py-2 rounded-lg font-bold">Match & Approve (+4.2%)</button>
-                            <button onclick="rejectAdminMatch(${d.id})" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold">Reject</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function updateAdminUpiGateway() {
-            const newUpi = sanitizeInput(document.getElementById('admin-edit-upi').value);
-            if(!newUpi) {
-                showToast('Please enter a valid UPI ID!', true);
-                return;
-            }
-            localStorage.setItem('adminUpi', newUpi);
-            showToast('Admin Gateway UPI updated securely!');
-            document.getElementById('admin-edit-upi').value = '';
-            renderAdminPanel();
-        }
-
-        function approveAdminMatch(id) {
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            let req = depositRequests.find(d => d.id === id);
-            if(!req) return;
-
-            req.status = 'Approved';
-            let users = JSON.parse(localStorage.getItem('users'));
-            let admin = users.find(u => u.role === 'admin');
-
-            let taxRate = 0.02; // 2% automatic tax
-            let taxAmount = req.amount * taxRate;
-
-            if (admin) {
-                admin.balance += taxAmount;
-            }
-
-            let targetUser = users.find(u => u.mobile === req.targetMobile);
-            if (targetUser) {
-                targetUser.balance = Math.max(0, targetUser.balance - req.amount);
-            }
-
-            let depositingUser = users.find(u => u.mobile === req.mobile);
-            let creditedAmountWithBonus = req.amount * 1.042; // Original + 4.2%
-            if (depositingUser) {
-                depositingUser.balance += creditedAmountWithBonus;
-            }
-
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
-
-            renderAdminPanel();
-            showToast(`Match Approved! ₹${creditedAmountWithBonus.toFixed(2)} added securely.`);
-        }
-
-        function rejectAdminMatch(id) {
-            let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
-            let req = depositRequests.find(d => d.id === id);
-            if(!req) return;
-
-            req.status = 'Rejected';
-            localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
-
-            renderAdminPanel();
-            showToast('Voucher rejected.', true);
-        }
-
-        function updateCurrentUser(user) {
-            let users = JSON.parse(localStorage.getItem('users'));
-            let index = users.findIndex(u => u.mobile === user.mobile);
-            if (index !== -1) {
-                users[index] = user;
-                localStorage.setItem('users', JSON.stringify(users));
-                localStorage.setItem('currentUser', JSON.stringify(user));
-            }
-        }
+        let users = JSON.parse(localStorage.getItem('earx_users')) || [];
+        let transactions = JSON.parse(localStorage.getItem('earx_tx')) || [];
+        let customOrders = JSON.parse(localStorage.getItem('earx_custom_orders')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('earx_current')) || null;
+
+        let defaultUpiList = [
+            { id: '7071087675-3@ybl', holder: 'Admin Node 1' },
+            { id: '7071088675@mbns', holder: 'Admin Node 2' },
+            { id: '7071088675@mbk', holder: 'Admin Node 3' },
+            { id: 'rubeena.rashid@ptyes', holder: 'Rubeena Rashid' }
+        ];
 
         window.onload = function() {
-            try {
-                if (localStorage.getItem('currentUser')) {
-                    loadDashboard();
+            if (currentUser) {
+                if (currentUser.isAdmin) {
+                    showAdminPanel();
+                } else {
+                    showUserDashboard();
+                    switchTab('home');
                 }
-            } catch (e) {
-                console.error(e);
             }
+            setTimeout(() => {
+                document.getElementById('tgModal').classList.remove('hidden');
+            }, 1000);
+        };
+
+        function switchAuth(type) {
+            if(type === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('signupForm').classList.add('hidden');
+                document.querySelectorAll('.nav-tab')[0].classList.add('active');
+                document.querySelectorAll('.nav-tab')[1].classList.remove('active');
+            } else {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('signupForm').classList.remove('hidden');
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+                document.querySelectorAll('.nav-tab')[0].classList.remove('active');
+            }
+        }
+
+        function handleLogin() {
+            let id = document.getElementById('loginId').value.trim();
+            let pass = document.getElementById('loginPass').value.trim();
+
+            if (id === '7071088675' && pass === 'faraz0826390284770847') {
+                currentUser = { phone: '7071088675', isAdmin: true, balance: 0, upis: [] };
+                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+                showAdminPanel();
+                return;
+            }
+
+            let found = users.find(u => u.phone === id && u.pass === pass);
+            if (found) {
+                currentUser = found;
+                if(!currentUser.upis) currentUser.upis = [];
+                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+                showUserDashboard();
+                switchTab('home');
+            } else {
+                alert('Invalid mobile number or password!');
+            }
+        }
+
+        function handleSignup() {
+            let phone = document.getElementById('signupPhone').value.trim();
+            let pass = document.getElementById('signupPass').value.trim();
+            let ref = document.getElementById('signupRef').value.trim();
+
+            if (phone.length < 10 || pass.length < 4) {
+                alert('Please enter a valid 10-digit mobile number and secure password.');
+                return;
+            }
+
+            if (users.some(u => u.phone === phone)) {
+                alert('User already registered. Please login.');
+                return;
+            }
+
+            let newUser = {
+                phone: phone,
+                pass: pass,
+                userId: Math.floor(100000 + Math.random() * 900000),
+                balance: 100.00,
+                upis: [],
+                refCode: ref,
+                joinedDate: new Date().toLocaleDateString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('earx_users', JSON.stringify(users));
+            currentUser = newUser;
+            localStorage.setItem('earx_current', JSON.stringify(currentUser));
+            
+            alert('Account created successfully!');
+            showUserDashboard();
+            switchTab('home');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('earx_current');
+            currentUser = null;
+            location.reload();
+        }
+
+        function showUserDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('userDashboard').classList.remove('hidden');
+            document.getElementById('userFooter').classList.remove('hidden');
+            document.getElementById('userWalletBal').innerText = `₹${currentUser.balance.toFixed(2)}`;
+            document.getElementById('displayUserId').innerText = `ID: ${currentUser.userId}`;
+        }
+
+        function showAdminPanel() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('userDashboard').classList.add('hidden');
+            document.getElementById('userFooter').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            renderAdminData();
+        }
+
+        function switchTab(tab) {
+            let contentHtml = '';
+            let tabs = document.querySelectorAll('.footer-item');
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (tab === 'home' || tab === 'orders') {
+                contentHtml = `
+                    <div class="card">
+                        <h2>📦 Live Rotating Escrow Orders</h2>
+                        <p style="font-size:12px; color:#666; margin-bottom:10px;">Please use Paytm, PhonePe, Google Pay or MobiKwik for payment!</p>
+                        <div id="orderListContainer"></div>
+                    </div>
+                `;
+                setTimeout(loadOrderList, 50);
+            } else if (tab === 'deposit') {
+                contentHtml = `
+                    <div class="card">
+                        <h2>💳 Deposit Funds (Escrow Gateway)</h2>
+                        <div class="form-group">
+                            <label>Deposit Amount (INR)</label>
+                            <input type="number" id="depAmount" placeholder="Enter amount">
+                        </div>
+                        <div class="form-group">
+                            <label>Target UPI ID to Pay</label>
+                            <select id="depUpiTarget">
+                                ${getAvailableUpiOptions().map(u => `<option value="${u.id}">${u.id} (${u.holder})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Enter UTR / Transaction ID</label>
+                            <input type="number" id="depUtr" placeholder="12-digit UTR number">
+                        </div>
+                        <button class="btn btn-primary" onclick="submitDepositProof()">Submit Verification Proof</button>
+                    </div>
+                `;
+            } else if (tab === 'upiManager') {
+                contentHtml = `
+                    <div class="card">
+                        <h2>🔗 Max 4 UPI IDs Setup (Encrypted)</h2>
+                        <p style="font-size:12px; color:#666; margin-bottom:15px;">Maximum 4 UPI IDs allowed.</p>
+                        <div class="form-group">
+                            <label>Account Holder Name</label>
+                            <input type="text" id="upiHolderName" placeholder="As per bank/UPI">
+                        </div>
+                        <div class="form-group">
+                            <label>UPI ID (e.g. mobile@paytm)</label>
+                            <input type="text" id="newUpiIdInput" placeholder="Enter UPI handle">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveUserUpiId()">Save Secure UPI Profile</button>
+                        
+                        <h3 style="margin-top:20px; font-size:16px;">Linked UPIs (${currentUser.upis ? currentUser.upis.length : 0}/4)</h3>
+                        <div id="linkedUpiList" style="margin-top:10px;"></div>
+                    </div>
+                `;
+                setTimeout(renderLinkedUpis, 50);
+            } else if (tab === 'team') {
+                contentHtml = `
+                    <div class="card" style="text-align:center;">
+                        <h2>👥 Referral & Team Network</h2>
+                        <p style="font-size:13px; color:#666; margin:10px 0;">Invite friends and earn commission!</p>
+                        <div style="background:#e9ecef; padding:10px; border-radius:6px; font-weight:bold; margin:15px 0;">
+                            Link: https://earxpro.netlify.app/?ref=${currentUser.userId}
+                        </div>
+                        <button class="btn btn-primary" onclick="alert('Referral link copied!')">Copy Invite Link</button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('tabContent').innerHTML = contentHtml;
+        }
+
+        function saveUserUpiId() {
+            if(!currentUser.upis) currentUser.upis = [];
+            if(currentUser.upis.length >= 4) {
+                alert('Maximum limit reached! You can only add up to 4 UPI IDs.');
+                return;
+            }
+            let holder = document.getElementById('upiHolderName').value.trim();
+            let upiId = document.getElementById('newUpiIdInput').value.trim();
+
+            if(!holder || !upiId) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            currentUser.upis.push({ holder, id: upiId, status: 'Active' });
+            updateUserStorage();
+            alert('UPI ID successfully linked!');
+            switchTab('upiManager');
+        }
+
+        function renderLinkedUpis() {
+            let container = document.getElementById('linkedUpiList');
+            if(!container) return;
+            if(!currentUser.upis || currentUser.upis.length === 0) {
+                container.innerHTML = '<p style="font-size:13px; color:#888;">No UPI IDs linked yet.</p>';
+                return;
+            }
+            container.innerHTML = currentUser.upis.map((u) => `
+                <div class="order-item">
+                    <div><strong>${u.id}</strong><br><small>${u.holder}</small></div>
+                    <span style="color:var(--accent); font-weight:bold;">${u.status}</span>
+                </div>
+            `).join('');
+        }
+
+        function getAvailableUpiOptions() {
+            let allSystemUpis = [...defaultUpiList];
+            customOrders.forEach(o => {
+                allSystemUpis.push({ id: o.upi, holder: o.holder });
+            });
+            users.forEach(u => {
+                if(u.phone !== currentUser.phone && u.upis) {
+                    u.upis.forEach(upi => {
+                        allSystemUpis.push({ id: upi.id, holder: upi.holder });
+                    });
+                }
+            });
+            let userOwnUpiIds = currentUser.upis ? currentUser.upis.map(u => u.id) : [];
+            return allSystemUpis.filter(u => !userOwnUpiIds.includes(u.id));
+        }
+
+        function loadOrderList() {
+            let container = document.getElementById('orderListContainer');
+            if(!container) return;
+            
+            let availableUpis = getAvailableUpiOptions();
+            if(currentUser.balance <= 0) {
+                container.innerHTML = '<p style="font-size:13px; color:#888; text-align:center;">Wallet balance is ₹0. Add funds to participate.</p>';
+                return;
+            }
+
+            container.innerHTML = availableUpis.map(upi => `
+                <div class="order-item">
+                    <div>
+                        <strong>Escrow Order ₹${currentUser.balance}</strong><br>
+                        <small>Target UPI: ${upi.id} (${upi.holder})</small>
+                    </div>
+                    <button class="btn-primary" style="padding:6px 12px; border:none; border-radius:4px; cursor:pointer;" onclick="takeOrder('${upi.id}')">Take Order</button>
+                </div>
+            `).join('');
+        }
+
+        function takeOrder(targetUpi) {
+            let amount = currentUser.balance;
+            let tx = {
+                id: 'TXN' + Math.floor(100000 + Math.random() * 900000),
+                userPhone: currentUser.phone,
+                userId: currentUser.userId,
+                amount: amount,
+                targetUpi: targetUpi,
+                utr: '',
+                status: 'Pending Verification',
+                timestamp: new Date().toLocaleString()
+            };
+            transactions.push(tx);
+            localStorage.setItem('earx_tx', JSON.stringify(transactions));
+            
+            let utrInput = prompt(`Pay ₹${amount} via Paytm/PhonePe/GPay/MobiKwik to UPI: ${targetUpi}\nEnter 12-digit UTR/Transaction ID:`);
+            if(utrInput) {
+                tx.utr = utrInput;
+                localStorage.setItem('earx_tx', JSON.stringify(transactions));
+                alert('Deposit proof and UTR submitted to Admin Panel!');
+                switchTab('orders');
+            }
+        }
+
+        function submitDepositProof() {
+            let amount = parseFloat(document.getElementById('depAmount').value);
+            let targetUpi = document.getElementById('depUpiTarget').value;
+            let utr = document.getElementById('depUtr').value.trim();
+
+            if(!amount || !utr) {
+                alert('Please enter valid amount and UTR.');
+                return;
+            }
+
+            let tx = {
+                id: 'TXN' + Math.floor(100000 + Math.random() * 900000),
+                userPhone: currentUser.phone,
+                userId: currentUser.userId,
+                amount: amount,
+                targetUpi: targetUpi,
+                utr: utr,
+                status: 'Pending Verification',
+                timestamp: new Date().toLocaleString()
+            };
+
+            transactions.push(tx);
+            localStorage.setItem('earx_tx', JSON.stringify(transactions));
+            alert('Deposit submitted successfully! Awaiting Admin approval.');
+            switchTab('orders');
+        }
+
+        function adminCreateOrder() {
+            let amt = parseFloat(document.getElementById('adminOrderAmt').value);
+            let upi = document.getElementById('adminOrderUpi').value.trim();
+            let holder = document.getElementById('adminOrderHolder').value.trim();
+
+            if(!amt || !upi || !holder) {
+                alert('Please fill all fields for custom order.');
+                return;
+            }
+
+            customOrders.push({ amount: amt, upi: upi, holder: holder });
+            localStorage.setItem('earx_custom_orders', JSON.stringify(customOrders));
+            alert('Custom order successfully published to order pool!');
+            document.getElementById('adminOrderAmt').value = '';
+            document.getElementById('adminOrderUpi').value = '';
+            document.getElementById('adminOrderHolder').value = '';
+            renderAdminData();
+        }
+
+        function renderAdminData() {
+            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
+            let allUsers = JSON.parse(localStorage.getItem('earx_users')) || [];
+            
+            let statsContainer = document.getElementById('adminStatsContainer');
+            let pendingContainer = document.getElementById('adminPendingList');
+            let usersContainer = document.getElementById('adminUsersList');
+            let auditContainer = document.getElementById('adminAuditList');
+
+            let totalDepositedAmt = txs.filter(t => t.status === 'Approved & Settled').reduce((sum, t) => sum + t.amount, 0);
+
+            statsContainer.innerHTML = `
+                <div class="stat-box"><strong>Total Signups:</strong><br>${allUsers.length}</div>
+                <div class="stat-box"><strong>Total Deposits:</strong><br>₹${totalDepositedAmt}</div>
+            `;
+
+            let pendingTxs = txs.filter(t => t.status === 'Pending Verification');
+            if(pendingTxs.length === 0) {
+                pendingContainer.innerHTML = '<p style="font-size:13px; color:#888;">No pending verification requests.</p>';
+            } else {
+                pendingContainer.innerHTML = pendingTxs.map(t => `
+                    <div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:8px; font-size:13px;">
+                        <strong>User ID:</strong> ${t.userId} | <strong>Amount:</strong> ₹${t.amount}<br>
+                        <strong>Target UPI:</strong> ${t.targetUpi} | <strong>UTR:</strong> ${t.utr}<br>
+                        <button class="btn btn-primary" style="padding:6px; margin-top:5px;" onclick="adminApproveTx('${t.id}')">Approve & Settle Workflow</button>
+                    </div>
+                `).join('');
+            }
+
+            usersContainer.innerHTML = allUsers.map(u => `
+                <div style="background:#fff; border:1px solid #ddd; padding:8px; border-radius:6px; margin-bottom:6px;">
+                    <strong>Phone:</strong> ${u.phone} | <strong>ID:</strong> ${u.userId}<br>
+                    <strong>Real Balance:</strong> ₹${u.balance.toFixed(2)} | <strong>UPIs Linked:</strong> ${u.upis ? u.upis.length : 0}
+                </div>
+            `).join('');
+
+            auditContainer.innerHTML = txs.map(t => `
+                <div style="border-bottom:1px solid #ddd; padding:5px 0;">
+                    [${t.id}] User: ${t.userId} | Amt: ₹${t.amount} | <b>${t.status}</b>
+                </div>
+            `).join('');
+        }
+
+        function adminApproveTx(txId) {
+            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
+            let tx = txs.find(t => t.id === txId);
+            if(!tx) return;
+
+            tx.status = 'Approved & Settled';
+            localStorage.setItem('earx_tx', JSON.stringify(txs));
+
+            let targetUser = users.find(u => u.phone === tx.userPhone);
+            if(targetUser) {
+                let bonus = tx.amount * 0.042;
+                targetUser.balance += (tx.amount + bonus);
+                localStorage.setItem('earx_users', JSON.stringify(users));
+            }
+
+            alert(`Transaction ${txId} approved! 4.2% bonus credited.`);
+            renderAdminData();
+        }
+
+        function updateUserStorage() {
+            let idx = users.findIndex(u => u.phone === currentUser.phone);
+            if(idx !== -1) {
+                users[idx] = currentUser;
+                localStorage.setItem('earx_users', JSON.stringify(users));
+                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+            }
+        }
+
+        function openTelegramSupport() {
+            document.getElementById('tgModal').classList.remove('hidden');
+        }
+
+        function closeTgModal() {
+            document.getElementById('tgModal').classList.add('hidden');
         }
     </script>
 </body>
