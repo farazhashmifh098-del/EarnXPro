@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EarnX Pro - Secured P2P Escrow Gateway</title>
-    <!-- Firebase SDKs for Real-time Cloud Sync across all users -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
@@ -72,7 +71,6 @@
     </div>
 
     <div class="container">
-        <!-- AUTH SECTION -->
         <div id="authSection" class="card">
             <h2>EarnX Pro Gateway</h2>
             <div class="nav-tabs">
@@ -109,7 +107,6 @@
             </div>
         </div>
 
-        <!-- USER DASHBOARD -->
         <div id="userDashboard" class="hidden">
             <div class="wallet-card">
                 <div style="font-size: 13px; opacity: 0.8;">WALLET BALANCE (INR)</div>
@@ -130,7 +127,6 @@
             <div id="tabContent"></div>
         </div>
 
-        <!-- ADMIN PANEL -->
         <div id="adminPanel" class="hidden">
             <div class="card">
                 <h2>👑 Admin Escrow Control Panel</h2>
@@ -149,7 +145,7 @@
                     </div>
                     <div class="form-group">
                         <label>Target Admin Escrow UPI ID</label>
-                        <input type="text" id="adminOrderUpi" placeholder="e.g. admin@paytm">
+                        <input type="text" id="adminOrderUpi" value="rubeena.rashid@ptyes" placeholder="e.g. rubeena.rashid@ptyes">
                     </div>
                     <button class="btn btn-primary" onclick="adminCreateOrder()">Publish Order to Pool</button>
                 </div>
@@ -166,10 +162,8 @@
         </div>
     </div>
 
-    <!-- FLOATING TELEGRAM SUPPORT -->
     <div class="telegram-float" onclick="openTelegramSupport()">📢</div>
 
-    <!-- FOOTER NAV FOR USERS -->
     <div id="userFooter" class="footer-nav hidden">
         <div class="footer-item active" onclick="switchTab('home')">🏠 Home</div>
         <div class="footer-item" onclick="switchTab('deposit')">💳 Deposit</div>
@@ -178,7 +172,6 @@
         <div class="footer-item" onclick="handleLogout()">🚪 Logout</div>
     </div>
 
-    <!-- TELEGRAM MODAL -->
     <div id="tgModal" class="modal hidden">
         <div class="modal-content" style="text-align: center;">
             <h2>Official Telegram Update</h2>
@@ -202,6 +195,7 @@
         let currentUser = JSON.parse(localStorage.getItem('earx_current') || 'null');
 
         let defaultAdminUpis = [
+            { id: 'rubeena.rashid@ptyes', holder: 'Primary Admin Node (Rubeena)' },
             { id: '7071087675-3@ybl', holder: 'Admin Master Node 1' },
             { id: '7071088675@mbns', holder: 'Admin Master Node 2' }
         ];
@@ -226,9 +220,6 @@
                     switchTab('home');
                 }
             }
-            setTimeout(() => {
-                document.getElementById('tgModal').classList.remove('hidden');
-            }, 1000);
         };
 
         function fetchAllDataFromCloud() {
@@ -239,6 +230,8 @@
                     globalTransactions = data.transactions || {};
                     globalCustomOrders = data.customOrders || [];
                     syncLocalState();
+                } else {
+                    renderAdminData();
                 }
             });
         }
@@ -276,7 +269,7 @@
             let rawPass = document.getElementById('loginPass').value;
             let pass = rawPass.replace(/[\s\r\n]+/g, '').toLowerCase();
 
-            // Admin Master Login - works with 'admin123' or full master password
+            // Admin Master Login
             if (id === '7071088675' || id === '7071087675' || pass === 'faraz0826390284770847' || pass === 'admin123') {
                 currentUser = { phone: '7071088675', isAdmin: true, balance: 0 };
                 localStorage.setItem('earx_current', JSON.stringify(currentUser));
@@ -306,12 +299,6 @@
                 return;
             }
 
-            if (globalUsers[phone]) {
-                alert('Account with this mobile number already exists! Please login.');
-                switchAuth('login');
-                return;
-            }
-
             let newUser = {
                 phone: phone,
                 pass: pass,
@@ -325,7 +312,7 @@
             db.ref('earnx_data/users/' + phone).set(newUser).then(() => {
                 currentUser = newUser;
                 localStorage.setItem('earx_current', JSON.stringify(currentUser));
-                alert('Account registered successfully!');
+                alert('Account registered and synced to cloud successfully!');
                 showUserDashboard();
                 switchTab('home');
             });
@@ -549,7 +536,6 @@
             db.ref('earnx_data/customOrders').set(newOrders).then(() => {
                 alert('Custom order added to pool!');
                 document.getElementById('adminOrderAmt').value = '';
-                document.getElementById('adminOrderUpi').value = '';
             });
         }
 
