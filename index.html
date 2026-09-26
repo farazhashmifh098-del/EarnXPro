@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EarnX Pro - Secured P2P Escrow Gateway</title>
+    <!-- Firebase SDKs for Real-time Cloud Sync across all users -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
@@ -71,6 +72,7 @@
     </div>
 
     <div class="container">
+        <!-- AUTH SECTION -->
         <div id="authSection" class="card">
             <h2>EarnX Pro Gateway</h2>
             <div class="nav-tabs">
@@ -107,6 +109,7 @@
             </div>
         </div>
 
+        <!-- USER DASHBOARD -->
         <div id="userDashboard" class="hidden">
             <div class="wallet-card">
                 <div style="font-size: 13px; opacity: 0.8;">WALLET BALANCE (INR)</div>
@@ -119,14 +122,15 @@
 
             <div class="grid-menu">
                 <div class="menu-item" onclick="switchTab('deposit')">💳 Deposit</div>
+                <div class="menu-item" onclick="switchTab('withdraw')">💸 Withdraw</div>
                 <div class="menu-item" onclick="switchTab('orders')">📦 Orders</div>
                 <div class="menu-item" onclick="switchTab('upiManager')">🔗 Link UPI</div>
-                <div class="menu-item" onclick="switchTab('team')">👥 Team</div>
             </div>
 
             <div id="tabContent"></div>
         </div>
 
+        <!-- ADMIN PANEL -->
         <div id="adminPanel" class="hidden">
             <div class="card">
                 <h2>👑 Admin Escrow Control Panel</h2>
@@ -136,6 +140,20 @@
                 </div>
                 
                 <div id="adminStatsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
+
+                <!-- ADMIN MANUAL WALLET EDITOR -->
+                <h3 style="margin-top: 15px; font-size:16px;">⚡ Admin Manual Balance Control</h3>
+                <div style="background:#f8f9fa; padding:12px; border-radius:8px; margin-top:8px;">
+                    <div class="form-group">
+                        <label>Target User Phone Number</label>
+                        <input type="text" id="adminTargetPhone" placeholder="Enter user's 10-digit mobile">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount to Add/Deduct (INR)</label>
+                        <input type="number" id="adminManualAmt" placeholder="e.g. 500 or -200">
+                    </div>
+                    <button class="btn btn-primary" onclick="adminManualBalanceUpdate()">Update User Balance</button>
+                </div>
 
                 <h3 style="margin-top: 15px; font-size:16px;">➕ Admin Create Custom Order</h3>
                 <div style="background:#f8f9fa; padding:12px; border-radius:8px; margin-top:8px;">
@@ -150,8 +168,11 @@
                     <button class="btn btn-primary" onclick="adminCreateOrder()">Publish Order to Pool</button>
                 </div>
 
-                <h3 style="margin-top: 20px; font-size:16px;">Pending Deposits & UTR Verifications (All Users)</h3>
+                <h3 style="margin-top: 20px; font-size:16px;">Pending Deposits & UTR Verifications</h3>
                 <div id="adminPendingList" style="margin-top: 10px;"></div>
+
+                <h3 style="margin-top: 20px; font-size:16px;">Pending Payout / Withdrawal Requests</h3>
+                <div id="adminPendingPayouts" style="margin-top: 10px;"></div>
 
                 <h3 style="margin-top: 20px; font-size:16px;">👥 All Registered Users & Balances</h3>
                 <div id="adminUsersList" style="margin-top: 10px; font-size: 13px;"></div>
@@ -162,16 +183,19 @@
         </div>
     </div>
 
+    <!-- FLOATING TELEGRAM SUPPORT -->
     <div class="telegram-float" onclick="openTelegramSupport()">📢</div>
 
+    <!-- FOOTER NAV FOR USERS -->
     <div id="userFooter" class="footer-nav hidden">
         <div class="footer-item active" onclick="switchTab('home')">🏠 Home</div>
         <div class="footer-item" onclick="switchTab('deposit')">💳 Deposit</div>
+        <div class="footer-item" onclick="switchTab('withdraw')">💸 Withdraw</div>
         <div class="footer-item" onclick="switchTab('orders')">📦 Orders</div>
-        <div class="footer-item" onclick="switchTab('team')">👥 Team</div>
         <div class="footer-item" onclick="handleLogout()">🚪 Logout</div>
     </div>
 
+    <!-- TELEGRAM MODAL -->
     <div id="tgModal" class="modal hidden">
         <div class="modal-content" style="text-align: center;">
             <h2>Official Telegram Update</h2>
@@ -182,7 +206,7 @@
     </div>
 
     <script>
-        // FIREBASE CLOUD CONFIGURATION (Connects all devices & users globally)
+        // FIREBASE CLOUD CONFIGURATION
         const firebaseConfig = {
             databaseURL: "https://earnxpro-default-rtdb.firebaseio.com/"
         };
@@ -192,6 +216,7 @@
         let globalUsers = {};
         let globalTransactions = {};
         let globalCustomOrders = [];
+        let globalPayouts = {};
         let currentUser = JSON.parse(localStorage.getItem('earx_current') || 'null');
 
         let defaultAdminUpis = [
@@ -208,6 +233,7 @@
                     globalUsers = data.users || {};
                     globalTransactions = data.transactions || {};
                     globalCustomOrders = data.customOrders || [];
+                    globalPayouts = data.payouts || {};
                     syncLocalState();
                 }
             });
@@ -229,6 +255,7 @@
                     globalUsers = data.users || {};
                     globalTransactions = data.transactions || {};
                     globalCustomOrders = data.customOrders || [];
+                    globalPayouts = data.payouts || {};
                     syncLocalState();
                 } else {
                     renderAdminData();
@@ -269,7 +296,6 @@
             let rawPass = document.getElementById('loginPass').value;
             let pass = rawPass.replace(/[\s\r\n]+/g, '').toLowerCase();
 
-            // Admin Master Login
             if (id === '7071088675' || id === '7071087675' || pass === 'faraz0826390284770847' || pass === 'admin123') {
                 currentUser = { phone: '7071088675', isAdmin: true, balance: 0 };
                 localStorage.setItem('earx_current', JSON.stringify(currentUser));
@@ -356,7 +382,7 @@
                             <button class="order-tier-btn ${currentOrderTier==='tier2'?'active':''}" onclick="setOrderTier('tier2', 500, 1000)">500 - 1000 INR</button>
                             <button class="order-tier-btn ${currentOrderTier==='tier3'?'active':''}" onclick="setOrderTier('tier3', 1000, 1500)">1000 - 1500 INR</button>
                         </div>
-                        <p style="font-size:12px; color:#666; margin-bottom:10px;">All payments route securely to Admin Escrow Node. Funds credit only after manual UTR approval.</p>
+                        <p style="font-size:12px; color:#666; margin-bottom:10px;">All payments route securely to Admin Escrow Node: <strong>rubeena.rashid@ptyes</strong></p>
                         <div id="orderListContainer"></div>
                     </div>
                 `;
@@ -383,6 +409,23 @@
                         <button class="btn btn-primary" onclick="submitDepositProof()">Submit UTR for Approval</button>
                     </div>
                 `;
+            } else if (tab === 'withdraw') {
+                contentHtml = `
+                    <div class="card">
+                        <h2>💸 Request Withdrawal (Payout)</h2>
+                        <div class="form-group">
+                            <label>Withdrawal Amount (INR)</label>
+                            <input type="number" id="withdrawAmount" placeholder="Enter amount to withdraw">
+                        </div>
+                        <div class="form-group">
+                            <label>Select Linked UPI ID</label>
+                            <select id="withdrawUpiSelect">
+                                ${currentUser.upis && currentUser.upis.length > 0 ? currentUser.upis.map(u => `<option value="${u.id}">${u.id}</option>`).join('') : '<option value="">Please link UPI first</option>'}
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="requestUserWithdrawal()">Submit Payout Request</button>
+                    </div>
+                `;
             } else if (tab === 'upiManager') {
                 contentHtml = `
                     <div class="card">
@@ -396,16 +439,6 @@
                     </div>
                 `;
                 setTimeout(renderLinkedUpis, 50);
-            } else if (tab === 'team') {
-                contentHtml = `
-                    <div class="card" style="text-align:center;">
-                        <h2>👥 Referral Network</h2>
-                        <p style="font-size:13px; color:#666; margin:10px 0;">Share your invite link:</p>
-                        <div style="background:#e9ecef; padding:10px; border-radius:6px; font-size:12px; word-break:break-all;">
-                            https://earxpro.netlify.app/?ref=${currentUser.userId}
-                        </div>
-                    </div>
-                `;
             }
             document.getElementById('tabContent').innerHTML = contentHtml;
         }
@@ -442,10 +475,49 @@
             container.innerHTML = currentUser.upis.map(u => `<div class="order-item"><div><strong>${u.id}</strong></div><span>${u.status}</span></div>`).join('');
         }
 
+        function requestUserWithdrawal() {
+            let amt = parseFloat(document.getElementById('withdrawAmount').value);
+            let upi = document.getElementById('withdrawUpiSelect').value;
+
+            if(!amt || amt <= 0) {
+                alert('Please enter a valid withdrawal amount.');
+                return;
+            }
+            if(!upi) {
+                alert('Please link and select a valid UPI ID first.');
+                return;
+            }
+            if(amt > currentUser.balance) {
+                alert('Insufficient wallet balance!');
+                return;
+            }
+
+            let payoutId = 'PO' + Math.floor(100000 + Math.random() * 900000);
+            let payoutObj = {
+                id: payoutId,
+                userPhone: currentUser.phone,
+                userId: currentUser.userId,
+                amount: amt,
+                upi: upi,
+                status: 'Pending Payout',
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Deduct balance temporarily from user wallet
+            currentUser.balance -= amt;
+            db.ref('earnx_data/users/' + currentUser.phone).set(currentUser);
+
+            db.ref('earnx_data/payouts/' + payoutId).set(payoutObj).then(() => {
+                alert('Withdrawal request submitted to admin! Amount deducted from wallet pending transfer.');
+                showUserDashboard();
+                switchTab('home');
+            });
+        }
+
         function loadOrderList(minAmt, maxAmt) {
             let container = document.getElementById('orderListContainer');
             if(!container) return;
-            let targetUpi = defaultAdminUpis[0].id;
+            let targetUpi = 'rubeena.rashid@ptyes';
 
             let sampleOrders = [
                 { amt: minAmt + 50 },
@@ -466,7 +538,7 @@
         }
 
         function takeOrder(amount, targetUpi) {
-            let utrInput = prompt(`Pay ₹${amount} to Admin Escrow UPI: ${targetUpi}\nEnter 12-digit UTR / Transaction ID after payment:`);
+            let utrInput = prompt(`Pay ₹${amount} from your Paytm/PhonePe to Admin Escrow UPI: ${targetUpi}\nEnter 12-digit UTR / Transaction ID after payment:`);
             if(!utrInput) return;
 
             let txId = 'TXN' + Math.floor(100000 + Math.random() * 900000);
@@ -539,9 +611,34 @@
             });
         }
 
+        function adminManualBalanceUpdate() {
+            let phone = document.getElementById('adminTargetPhone').value.trim();
+            let amount = parseFloat(document.getElementById('adminManualAmt').value);
+
+            if(!phone || isNaN(amount)) {
+                alert('Please enter a valid phone number and amount.');
+                return;
+            }
+
+            let targetUser = globalUsers[phone];
+            if(!targetUser) {
+                alert('User with this mobile number not found in cloud database!');
+                return;
+            }
+
+            targetUser.balance += amount;
+            db.ref('earnx_data/users/' + phone).set(targetUser).then(() => {
+                alert(`Successfully updated balance for ${phone}. New Balance: ₹${targetUser.balance.toFixed(2)}`);
+                document.getElementById('adminTargetPhone').value = '';
+                document.getElementById('adminManualAmt').value = '';
+                renderAdminData();
+            });
+        }
+
         function renderAdminData() {
             let statsContainer = document.getElementById('adminStatsContainer');
             let pendingContainer = document.getElementById('adminPendingList');
+            let payoutContainer = document.getElementById('adminPendingPayouts');
             let usersContainer = document.getElementById('adminUsersList');
             let auditContainer = document.getElementById('adminAuditList');
 
@@ -549,6 +646,7 @@
 
             let usersArr = Object.values(globalUsers);
             let txArr = Object.values(globalTransactions);
+            let payoutArr = Object.values(globalPayouts);
 
             let totalDeposited = txArr.filter(t => t.status === 'Approved & Settled').reduce((sum, t) => sum + t.amount, 0);
 
@@ -564,17 +662,33 @@
                 pendingContainer.innerHTML = pendingTxs.map(t => `
                     <div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:8px; font-size:13px;">
                         <strong>User ID:</strong> ${t.userId} (Phone: ${t.userPhone})<br>
-                        <strong>Amount Paid:</strong> ₹${t.amount} | <strong>Tax Route:</strong> ₹${t.taxFee ? t.taxFee.toFixed(2) : 0}<br>
+                        <strong>Amount Paid:</strong> ₹${t.amount} | <strong>Net Creditable:</strong> ₹${t.netCreditable.toFixed(2)}<br>
                         <strong>UTR / TxID:</strong> <span style="color:red; font-weight:bold;">${t.utr}</span><br>
-                        <strong>Target Admin Escrow UPI:</strong> ${t.targetUpi}<br>
+                        <strong>Target UPI:</strong> ${t.targetUpi}<br>
                         <button class="btn btn-primary" style="padding:6px; margin-top:5px;" onclick="adminApproveTx('${t.id}')">Approve & Credit Balance</button>
+                    </div>
+                `).join('');
+            }
+
+            let pendingPayouts = payoutArr.filter(p => p.status === 'Pending Payout');
+            if(pendingPayouts.length === 0) {
+                payoutContainer.innerHTML = '<p style="font-size:13px; color:#888;">No pending payout requests.</p>';
+            } else {
+                payoutContainer.innerHTML = pendingPayouts.map(p => `
+                    <div style="background:#e2f0cb; padding:10px; border-radius:6px; margin-bottom:8px; font-size:13px;">
+                        <strong>User ID:</strong> ${p.userId} (Phone: ${p.userPhone})<br>
+                        <strong>Withdraw Amount:</strong> ₹${p.amount}<br>
+                        <strong>Target UPI:</strong> <span style="color:blue; font-weight:bold;">${p.upi}</span><br>
+                        <button class="btn btn-primary" style="padding:6px; margin-top:5px; background:#2b9348;" onclick="adminMarkPayoutDone('${p.id}')">Mark Paid (Done)</button>
+                        <button class="btn" style="padding:6px; margin-top:5px; background:#dc3545; color:#fff;" onclick="adminRejectPayout('${p.id}')">Reject & Refund</button>
                     </div>
                 `).join('');
             }
 
             usersContainer.innerHTML = usersArr.map(u => `
                 <div style="background:#fff; border:1px solid #ddd; padding:8px; border-radius:6px; margin-bottom:6px;">
-                    <strong>Phone:</strong> ${u.phone} | <strong>ID:</strong> ${u.userId} | <strong>Wallet Balance:</strong> ₹${u.balance.toFixed(2)}
+                    <strong>Phone:</strong> ${u.phone} | <strong>ID:</strong> ${u.userId} | <strong>Wallet Balance:</strong> ₹${u.balance.toFixed(2)}<br>
+                    <small>Linked UPIs: ${u.upis && u.upis.length > 0 ? u.upis.map(upi => upi.id).join(', ') : 'None'}</small>
                 </div>
             `).join('');
 
@@ -622,6 +736,34 @@
 
             db.ref('earnx_data/transactions/' + txId).set(tx).then(() => {
                 alert(`Transaction ${txId} approved successfully! User wallet credited with ₹${tx.netCreditable.toFixed(2)}.`);
+                renderAdminData();
+            });
+        }
+
+        function adminMarkPayoutDone(payoutId) {
+            let po = globalPayouts[payoutId];
+            if(!po) return;
+
+            po.status = 'Paid Successfully';
+            db.ref('earnx_data/payouts/' + payoutId).set(po).then(() => {
+                alert(`Payout marked as Done!`);
+                renderAdminData();
+            });
+        }
+
+        function adminRejectPayout(payoutId) {
+            let po = globalPayouts[payoutId];
+            if(!po) return;
+
+            po.status = 'Rejected & Refunded';
+            let targetUser = globalUsers[po.userPhone];
+            if(targetUser) {
+                targetUser.balance += po.amount; // Refund back
+                db.ref('earnx_data/users/' + po.userPhone).set(targetUser);
+            }
+
+            db.ref('earnx_data/payouts/' + payoutId).set(po).then(() => {
+                alert(`Payout rejected and amount refunded to user wallet.`);
                 renderAdminData();
             });
         }
