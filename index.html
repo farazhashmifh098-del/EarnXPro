@@ -151,10 +151,6 @@
                         <label>Target UPI ID</label>
                         <input type="text" id="adminOrderUpi" placeholder="e.g. user@paytm">
                     </div>
-                    <div class="form-group">
-                        <label>Holder Name</label>
-                        <input type="text" id="adminOrderHolder" placeholder="Account Holder Name">
-                    </div>
                     <button class="btn btn-primary" onclick="adminCreateOrder()">Publish Order to Pool</button>
                 </div>
 
@@ -311,9 +307,9 @@
         function handleLogin() {
             syncDataFromServer();
             let id = document.getElementById('loginId').value.trim();
-            let pass = document.getElementById('loginPass').value.trim();
+            let pass = document.getElementById('loginPass').value.trim().replace(/\s+/g, '');
 
-            if (id === '7071088675' && pass === 'faraz0826390284770847') {
+            if ((id === '7071088675' || id === '7071087675') && (pass === 'faraz0826390284770847' || pass.includes('faraz0826390284770847'))) {
                 currentUser = { phone: '7071088675', isAdmin: true, balance: 0, upis: [] };
                 setStoredData('earx_current', currentUser);
                 showAdminPanel();
@@ -527,12 +523,12 @@
             syncDataFromServer();
             let allSystemUpis = [...defaultUpiList];
             customOrders.forEach(o => {
-                allSystemUpis.push({ id: o.upi, holder: o.holder });
+                allSystemUpis.push({ id: o.upi, holder: 'Admin Node' });
             });
             users.forEach(u => {
                 if(u.phone !== currentUser.phone && u.upis) {
                     u.upis.forEach(upi => {
-                        allSystemUpis.push({ id: upi.id, holder: upi.holder });
+                        allSystemUpis.push({ id: upi.id, holder: 'User Node' });
                     });
                 }
             });
@@ -648,19 +644,17 @@
             syncDataFromServer();
             let amt = parseFloat(document.getElementById('adminOrderAmt').value);
             let upi = document.getElementById('adminOrderUpi').value.trim();
-            let holder = document.getElementById('adminOrderHolder').value.trim();
 
-            if(!amt || !upi || !holder) {
+            if(!amt || !upi) {
                 alert('Please fill all fields for custom order.');
                 return;
             }
 
-            customOrders.push({ amount: amt, upi: upi, holder: holder });
+            customOrders.push({ amount: amt, upi: upi });
             setStoredData('earx_custom_orders', customOrders);
             alert('Custom order successfully published to order pool!');
             document.getElementById('adminOrderAmt').value = '';
             document.getElementById('adminOrderUpi').value = '';
-            document.getElementById('adminOrderHolder').value = '';
             renderAdminData();
         }
 
@@ -773,7 +767,6 @@
             document.getElementById('forgotModal').classList.add('hidden');
         }
 
-        let tempForgotPhone =../ 'tempForgotPhone';
         let tempPhoneVal = '';
         function sendOtpForForgot() {
             syncDataFromServer();
