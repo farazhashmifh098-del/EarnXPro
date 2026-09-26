@@ -134,7 +134,10 @@
         <div id="adminPanel" class="hidden">
             <div class="card">
                 <h2>👑 Admin Escrow Control Panel</h2>
-                <button class="btn" style="background:#dc3545; color:#fff; margin-bottom:15px;" onclick="handleLogout()">Admin Logout</button>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="btn" style="background:#2b9348; color:#fff; margin-top:0;" onclick="syncDataFromServer()">🔄 Refresh / Sync Data</button>
+                    <button class="btn" style="background:#dc3545; color:#fff; margin-top:0;" onclick="handleLogout()">Admin Logout</button>
+                </div>
                 
                 <div id="adminStatsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
 
@@ -217,10 +220,26 @@
     </div>
 
     <script>
-        let users = JSON.parse(localStorage.getItem('earx_users')) || [];
-        let transactions = JSON.parse(localStorage.getItem('earx_tx')) || [];
-        let customOrders = JSON.parse(localStorage.getItem('earx_custom_orders')) || [];
-        let currentUser = JSON.parse(localStorage.getItem('earx_current')) || null;
+        function getStoredData(key, defaultVal) {
+            try {
+                let val = localStorage.getItem(key);
+                return val ? JSON.parse(val) : defaultVal;
+            } catch(e) {
+                return defaultVal;
+            }
+        }
+
+        function setStoredData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                window.localStorage.setItem('earx_last_update', Date.now());
+            } catch(e) {}
+        }
+
+        let users = getStoredData('earx_users', []);
+        let transactions = getStoredData('earx_tx', []);
+        let customOrders = getStoredData('earx_custom_orders', []);
+        let currentUser = getStoredData('earx_current', null);
 
         let defaultUpiList = [
             { id: '7071087675-3@ybl', holder: 'Admin Node 1' },
@@ -230,11 +249,12 @@
         ];
 
         window.onload = function() {
-            // Check URL query parameters for referral auto-capture
+            setInterval(syncDataFromServer, 3000);
+
             const urlParams = new URLSearchParams(window.location.search);
             const refParam = urlParams.get('ref');
             if(refParam) {
-                localStorage.setItem('earx_ref', refParam);
+                setStoredData('earx_ref', refParam);
                 switchAuth('signup');
             }
 
@@ -251,6 +271,24 @@
             }, 1000);
         };
 
+        function syncDataFromServer() {
+            users = getStoredData('earx_users', []);
+            transactions = getStoredData('earx_tx', []);
+            customOrders = getStoredData('earx_custom_orders', []);
+            if(currentUser && !currentUser.isAdmin) {
+                let updatedSelf = users.find(u => u.phone === currentUser.phone);
+                if(updatedSelf) {
+                    currentUser = updatedSelf;
+                    setStoredData('earx_current', currentUser);
+                    let balEl = document.getElementById('userWalletBal');
+                    if(balEl) balEl.innerText = `₹${currentUser.balance.toFixed(2)}`;
+                }
+            }
+            if(currentUser && currentUser.isAdmin) {
+                renderAdminData();
+            }
+        }
+
         function switchAuth(type) {
             if(type === 'login') {
                 document.getElementById('loginForm').classList.remove('hidden');
@@ -263,7 +301,7 @@
                 document.querySelectorAll('.nav-tab')[1].classList.add('active');
                 document.querySelectorAll('.nav-tab')[0].classList.remove('active');
                 
-                let savedRef = localStorage.getItem('earx_ref');
+                let savedRef = getStoredData('earx_ref', '');
                 if(savedRef && document.getElementById('signupRef')) {
                     document.getElementById('signupRef').value = savedRef;
                 }
@@ -271,12 +309,13 @@
         }
 
         function handleLogin() {
+            syncDataFromServer();
             let id = document.getElementById('loginId').value.trim();
             let pass = document.getElementById('loginPass').value.trim();
 
             if (id === '7071088675' && pass === 'faraz0826390284770847') {
                 currentUser = { phone: '7071088675', isAdmin: true, balance: 0, upis: [] };
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+                setStoredData('earx_current', currentUser);
                 showAdminPanel();
                 return;
             }
@@ -285,7 +324,7 @@
             if (found) {
                 currentUser = found;
                 if(!currentUser.upis) currentUser.upis = [];
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+                setStoredData('earx_current', currentUser);
                 showUserDashboard();
                 switchTab('home');
             } else {
@@ -294,6 +333,7 @@
         }
 
         function handleSignup() {
+            syncDataFromServer();
             let phone = document.getElementById('signupPhone').value.trim();
             let pass = document.getElementById('signupPass').value.trim();
             let ref = document.getElementById('signupRef').value.trim();
@@ -303,7 +343,6 @@
                 return;
             }
 
-            // Check if account already exists for this number
             if (users.some(u => u.phone === phone)) {
                 alert('An account with this mobile number already exists! Please login.');
                 switchAuth('login');
@@ -314,16 +353,16 @@
                 phone: phone,
                 pass: pass,
                 userId: Math.floor(100000 + Math.random() * 900000),
-                balance: 99.00, // 99 INR New User Signup Bonus
+                balance: 99.00,
                 upis: [],
                 refCode: ref,
                 joinedDate: new Date().toLocaleDateString()
             };
 
             users.push(newUser);
-            localStorage.setItem('earx_users', JSON.stringify(users));
+            setStoredData('earx_users', users);
             currentUser = newUser;
-            localStorage.setItem('earx_current', JSON.stringify(currentUser));
+            setStoredData('earx_current', currentUser);
             
             alert('Account created successfully with ₹99 Bonus!');
             showUserDashboard();
@@ -403,10 +442,6 @@
                         <h2>🔗 Link Valid UPI ID</h2>
                         <p style="font-size:12px; color:#666; margin-bottom:15px;">Only valid UPI handles (e.g. mobile@paytm, name@ybl) are permitted and activated.</p>
                         <div class="form-group">
-                            <label>Account Holder Name</label>
-                            <input type="text" id="upiHolderName" placeholder="As per bank/UPI">
-                        </div>
-                        <div class="form-group">
                             <label>UPI ID (e.g. mobile@paytm)</label>
                             <input type="text" id="newUpiIdInput" placeholder="Enter valid UPI handle">
                         </div>
@@ -448,27 +483,26 @@
         }
 
         function saveUserUpiId() {
+            syncDataFromServer();
             if(!currentUser.upis) currentUser.upis = [];
             if(currentUser.upis.length >= 4) {
                 alert('Maximum limit reached! You can only add up to 4 UPI IDs.');
                 return;
             }
-            let holder = document.getElementById('upiHolderName').value.trim();
             let upiId = document.getElementById('newUpiIdInput').value.trim();
 
-            if(!holder || !upiId) {
-                alert('Please fill out all fields.');
+            if(!upiId) {
+                alert('Please enter a valid UPI ID.');
                 return;
             }
 
-            // Strict UPI validation check
             let upiRegex = /^[\w.-]+@[\w.-]+$/;
             if(!upiRegex.test(upiId)) {
-                alert('Invalid UPI ID format! Please enter a valid UPI handle (e.g., number@paytm or name@oksbi).');
+                alert('Invalid UPI ID format! Please enter a valid UPI handle (e.g., number@paytm).');
                 return;
             }
 
-            currentUser.upis.push({ holder, id: upiId, status: 'Active (Verified)' });
+            currentUser.upis.push({ holder: 'User UPI', id: upiId, status: 'Active (Verified)' });
             updateUserStorage();
             alert('Valid UPI ID successfully linked and activated!');
             switchTab('upiManager');
@@ -483,13 +517,14 @@
             }
             container.innerHTML = currentUser.upis.map((u) => `
                 <div class="order-item">
-                    <div><strong>${u.id}</strong><br><small>${u.holder}</small></div>
+                    <div><strong>${u.id}</strong></div>
                     <span style="color:var(--accent); font-weight:bold;">${u.status}</span>
                 </div>
             `).join('');
         }
 
         function getAvailableUpiOptions() {
+            syncDataFromServer();
             let allSystemUpis = [...defaultUpiList];
             customOrders.forEach(o => {
                 allSystemUpis.push({ id: o.upi, holder: o.holder });
@@ -515,7 +550,6 @@
                 return;
             }
 
-            // Generate sample dynamic orders within the selected range
             let sampleOrders = [
                 { amt: minAmt + 50, upi: availableUpis[0 % availableUpis.length] },
                 { amt: Math.floor((minAmt + maxAmt) / 2), upi: availableUpis[1 % availableUpis.length] },
@@ -527,7 +561,7 @@
                     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <strong>Escrow Order ₹${o.amt}</strong><br>
-                            <small>Target UPI: ${o.upi.id} (${o.upi.holder})</small>
+                            <small>Target UPI: ${o.upi.id}</small>
                         </div>
                         <button class="btn-primary" style="padding:6px 12px; border:none; border-radius:4px; cursor:pointer;" onclick="takeOrder(${o.amt}, '${o.upi.id}')">Take Order</button>
                     </div>
@@ -539,6 +573,7 @@
         }
 
         function takeOrder(amount, targetUpi) {
+            syncDataFromServer();
             if(currentUser.balance < amount) {
                 alert(`Insufficient wallet balance (₹${currentUser.balance}) for this order. Please deposit funds first.`);
                 switchTab('deposit');
@@ -563,18 +598,19 @@
                 timestamp: new Date().toLocaleString()
             };
             transactions.push(tx);
-            localStorage.setItem('earx_tx', JSON.stringify(transactions));
+            setStoredData('earx_tx', transactions);
             
             let utrInput = prompt(`Pay ₹${amount} via Paytm/PhonePe/GPay to UPI: ${targetUpi}\nEnter 12-digit UTR/Transaction ID:`);
             if(utrInput) {
                 tx.utr = utrInput;
-                localStorage.setItem('earx_tx', JSON.stringify(transactions));
+                setStoredData('earx_tx', transactions);
                 alert('Deposit proof and UTR submitted to Admin Panel!');
                 switchTab('orders');
             }
         }
 
         function submitDepositProof() {
+            syncDataFromServer();
             let amount = parseFloat(document.getElementById('depAmount').value);
             let targetUpi = document.getElementById('depUpiTarget').value;
             let utr = document.getElementById('depUtr').value.trim();
@@ -603,12 +639,13 @@
             };
 
             transactions.push(tx);
-            localStorage.setItem('earx_tx', JSON.stringify(transactions));
+            setStoredData('earx_tx', transactions);
             alert(`Deposit submitted successfully! (Tax Fee: ₹${taxFee.toFixed(2)} deducted). Awaiting Admin approval.`);
             switchTab('orders');
         }
 
         function adminCreateOrder() {
+            syncDataFromServer();
             let amt = parseFloat(document.getElementById('adminOrderAmt').value);
             let upi = document.getElementById('adminOrderUpi').value.trim();
             let holder = document.getElementById('adminOrderHolder').value.trim();
@@ -619,7 +656,7 @@
             }
 
             customOrders.push({ amount: amt, upi: upi, holder: holder });
-            localStorage.setItem('earx_custom_orders', JSON.stringify(customOrders));
+            setStoredData('earx_custom_orders', customOrders);
             alert('Custom order successfully published to order pool!');
             document.getElementById('adminOrderAmt').value = '';
             document.getElementById('adminOrderUpi').value = '';
@@ -628,22 +665,22 @@
         }
 
         function renderAdminData() {
-            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
-            let allUsers = JSON.parse(localStorage.getItem('earx_users')) || [];
-            
+            syncDataFromServer();
             let statsContainer = document.getElementById('adminStatsContainer');
             let pendingContainer = document.getElementById('adminPendingList');
             let usersContainer = document.getElementById('adminUsersList');
             let auditContainer = document.getElementById('adminAuditList');
 
-            let totalDepositedAmt = txs.filter(t => t.status === 'Approved & Settled').reduce((sum, t) => sum + t.amount, 0);
+            if(!statsContainer) return;
+
+            let totalDepositedAmt = transactions.filter(t => t.status === 'Approved & Settled').reduce((sum, t) => sum + t.amount, 0);
 
             statsContainer.innerHTML = `
-                <div class="stat-box"><strong>Total Signups:</strong><br>${allUsers.length}</div>
+                <div class="stat-box"><strong>Total Signups:</strong><br>${users.length}</div>
                 <div class="stat-box"><strong>Total Deposits:</strong><br>₹${totalDepositedAmt}</div>
             `;
 
-            let pendingTxs = txs.filter(t => t.status === 'Pending Verification');
+            let pendingTxs = transactions.filter(t => t.status === 'Pending Verification');
             if(pendingTxs.length === 0) {
                 pendingContainer.innerHTML = '<p style="font-size:13px; color:#888;">No pending verification requests.</p>';
             } else {
@@ -658,14 +695,14 @@
                 `).join('');
             }
 
-            usersContainer.innerHTML = allUsers.map(u => `
+            usersContainer.innerHTML = users.map(u => `
                 <div style="background:#fff; border:1px solid #ddd; padding:8px; border-radius:6px; margin-bottom:6px;">
                     <strong>Phone:</strong> ${u.phone} | <strong>ID:</strong> ${u.userId}<br>
                     <strong>Real Balance:</strong> ₹${u.balance.toFixed(2)} | <strong>UPIs Linked:</strong> ${u.upis ? u.upis.length : 0}
                 </div>
             `).join('');
 
-            if(txs.length === 0) {
+            if(transactions.length === 0) {
                 auditContainer.innerHTML = '<p style="font-size:12px; color:#888;">No transaction history available yet.</p>';
             } else {
                 auditContainer.innerHTML = `
@@ -681,7 +718,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${txs.map(t => `
+                            ${transactions.map(t => `
                                 <tr style="border-bottom:1px solid #ddd;">
                                     <td style="padding:6px;">${t.id}</td>
                                     <td style="padding:6px;">${t.userId}</td>
@@ -698,12 +735,12 @@
         }
 
         function adminApproveTx(txId) {
-            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
-            let tx = txs.find(t => t.id === txId);
+            syncDataFromServer();
+            let tx = transactions.find(t => t.id === txId);
             if(!tx) return;
 
             tx.status = 'Approved & Settled';
-            localStorage.setItem('earx_tx', JSON.stringify(txs));
+            setStoredData('earx_tx', transactions);
 
             let targetUser = users.find(u => u.phone === tx.userPhone);
             if(targetUser) {
@@ -711,7 +748,6 @@
                 let bonus = creditAmount * 0.042;
                 targetUser.balance += (creditAmount + bonus);
 
-                // Check referral sponsor and reward 1% commission
                 if(targetUser.refCode) {
                     let sponsor = users.find(u => u.userId == targetUser.refCode);
                     if(sponsor) {
@@ -720,14 +756,13 @@
                     }
                 }
 
-                localStorage.setItem('earx_users', JSON.stringify(users));
+                setStoredData('earx_users', users);
             }
 
             alert(`Transaction ${txId} approved successfully! Balance credited with bonus & referral commission.`);
             renderAdminData();
         }
 
-        // Forgot password workflow
         function openForgotPassword() {
             document.getElementById('forgotModal').classList.remove('hidden');
             document.getElementById('forgotStep1').classList.remove('hidden');
@@ -738,21 +773,24 @@
             document.getElementById('forgotModal').classList.add('hidden');
         }
 
-        let tempForgotPhone = '';
+        let tempForgotPhone =../ 'tempForgotPhone';
+        let tempPhoneVal = '';
         function sendOtpForForgot() {
+            syncDataFromServer();
             let phone = document.getElementById('forgotPhone').value.trim();
             let found = users.find(u => u.phone === phone);
             if(!found) {
                 alert('Mobile number not registered in our system!');
                 return;
             }
-            tempForgotPhone = phone;
+            tempPhoneVal = phone;
             alert('Simulation: Your 4-digit OTP is 5678');
             document.getElementById('forgotStep1').classList.add('hidden');
             document.getElementById('forgotStep2').classList.remove('hidden');
         }
 
         function verifyAndResetPassword() {
+            syncDataFromServer();
             let otp = document.getElementById('forgotOtpInput').value.trim();
             let newPass = document.getElementById('newPasswordInput').value.trim();
 
@@ -765,10 +803,10 @@
                 return;
             }
 
-            let uIndex = users.findIndex(u => u.phone === tempForgotPhone);
+            let uIndex = users.findIndex(u => u.phone === tempPhoneVal);
             if(uIndex !== -1) {
                 users[uIndex].pass = newPass;
-                localStorage.setItem('earx_users', JSON.stringify(users));
+                setStoredData('earx_users', users);
                 alert('Password successfully reset! You can now login with your new password.');
                 closeForgotModal();
                 switchAuth('login');
@@ -779,804 +817,8 @@
             let idx = users.findIndex(u => u.phone === currentUser.phone);
             if(idx !== -1) {
                 users[idx] = currentUser;
-                localStorage.setItem('earx_users', JSON.stringify(users));
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
-            }
-        }
-
-        function openTelegramSupport() {
-            document.getElementById('tgModal').classList.remove('hidden');
-        }
-
-        function closeTgModal() {
-            document.getElementById('tgModal').classList.add('hidden');
-        }
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EarnX Pro - Secured P2P Escrow Gateway</title>
-    <style>
-        :root {
-            --primary: #0a3622;
-            --secondary: #ffb703;
-            --accent: #2b9348;
-            --bg: #f4f6f8;
-            --card-bg: #ffffff;
-            --text: #212529;
-            --text-muted: #6c757d;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding-bottom: 70px; }
-        
-        .top-banner { background: var(--primary); color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .secure-badge { background: var(--accent); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        
-        .container { max-width: 480px; margin: 0 auto; padding: 15px; }
-        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        
-        h2 { color: var(--primary); margin-bottom: 15px; font-size: 20px; text-align: center; }
-        
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--primary); }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; }
-        
-        .btn { width: 100%; padding: 12px; background: var(--secondary); border: none; border-radius: 6px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; margin-top: 10px; }
-        .btn-primary { background: var(--primary); color: #fff; }
-        
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .nav-tab { flex: 1; padding: 10px; text-align: center; background: #e9ecef; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .nav-tab.active { background: var(--primary); color: #fff; }
-        
-        .wallet-card { background: linear-gradient(135deg, #0a3622, #1b4d3e); color: #fff; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-        .wallet-balance { font-size: 28px; font-weight: bold; margin: 5px 0; }
-        
-        .grid-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-        .menu-item { background: #fff; padding: 12px 5px; text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
-        
-        .order-tier-tabs { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 5px; }
-        .order-tier-btn { padding: 6px 10px; background: #e9ecef; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .order-tier-btn.active { background: var(--primary); color: #fff; }
-
-        .order-item { background: #f8f9fa; border-left: 4px solid var(--accent); padding: 12px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
-        
-        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #ddd; z-index: 99; }
-        .footer-item { text-align: center; font-size: 11px; color: var(--text-muted); cursor: pointer; }
-        .footer-item.active { color: var(--primary); font-weight: bold; }
-        
-        .telegram-float { position: fixed; right: 20px; bottom: 75px; background: #0088cc; color: #fff; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 98; cursor: pointer; }
-        
-        .hidden { display: none !important; }
-        .stat-box { background: #e9ecef; padding: 10px; border-radius: 6px; text-align: center; font-size: 14px; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-
-    <div class="top-banner">
-        <span>🔒 256-bit Encrypted Node</span>
-        <span class="secure-badge">EarnX Pro</span>
-    </div>
-
-    <div class="container">
-        <!-- AUTH SECTION -->
-        <div id="authSection" class="card">
-            <h2>EarnX Pro Gateway</h2>
-            <div class="nav-tabs">
-                <div class="nav-tab active" onclick="switchAuth('login')">Login</div>
-                <div class="nav-tab" onclick="switchAuth('signup')">Sign Up</div>
-            </div>
-            
-            <div id="loginForm">
-                <div class="form-group">
-                    <label>Mobile Number or User ID</label>
-                    <input type="text" id="loginId" placeholder="Enter 10-digit mobile">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPass" placeholder="Enter password">
-                </div>
-                <button class="btn btn-primary" onclick="handleLogin()">Secure Login</button>
-                <div style="text-align: right; margin-top: 8px;">
-                    <a href="javascript:void(0);" onclick="openForgotPassword()" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
-                </div>
-            </div>
-
-            <div id="signupForm" class="hidden">
-                <div class="form-group">
-                    <label>Mobile Number</label>
-                    <input type="text" id="signupPhone" placeholder="Enter 10-digit mobile">
-                </div>
-                <div class="form-group">
-                    <label>Create Password</label>
-                    <input type="password" id="signupPass" placeholder="Create password">
-                </div>
-                <div class="form-group">
-                    <label>Referral Code (Optional)</label>
-                    <input type="text" id="signupRef" placeholder="Referral code if any">
-                </div>
-                <button class="btn btn-primary" onclick="handleSignup()">Register Account</button>
-            </div>
-        </div>
-
-        <!-- USER DASHBOARD -->
-        <div id="userDashboard" class="hidden">
-            <div class="wallet-card">
-                <div style="font-size: 13px; opacity: 0.8;">WALLET BALANCE (INR)</div>
-                <div class="wallet-balance" id="userWalletBal">₹0.00</div>
-                <div style="font-size: 11px; display: flex; justify-content: space-between; margin-top: 10px;">
-                    <span id="displayUserId">ID: --</span>
-                    <span style="color: #2b9348; font-weight: bold;">Firewall: Active (Anti-Hack)</span>
-                </div>
-            </div>
-
-            <div class="grid-menu">
-                <div class="menu-item" onclick="switchTab('deposit')">💳 Deposit</div>
-                <div class="menu-item" onclick="switchTab('orders')">📦 Orders</div>
-                <div class="menu-item" onclick="switchTab('upiManager')">🔗 Link UPI</div>
-                <div class="menu-item" onclick="switchTab('team')">👥 Team</div>
-            </div>
-
-            <div id="tabContent"></div>
-        </div>
-
-        <!-- ADMIN PANEL -->
-        <div id="adminPanel" class="hidden">
-            <div class="card">
-                <h2>👑 Admin Escrow Control Panel</h2>
-                <button class="btn" style="background:#dc3545; color:#fff; margin-bottom:15px;" onclick="handleLogout()">Admin Logout</button>
-                
-                <div id="adminStatsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
-
-                <h3 style="margin-top: 15px; font-size:16px;">➕ Admin Create Custom Order</h3>
-                <div style="background:#f8f9fa; padding:12px; border-radius:8px; margin-top:8px;">
-                    <div class="form-group">
-                        <label>Order Amount (INR)</label>
-                        <input type="number" id="adminOrderAmt" placeholder="e.g. 500">
-                    </div>
-                    <div class="form-group">
-                        <label>Target UPI ID</label>
-                        <input type="text" id="adminOrderUpi" placeholder="e.g. user@paytm">
-                    </div>
-                    <div class="form-group">
-                        <label>Holder Name</label>
-                        <input type="text" id="adminOrderHolder" placeholder="Account Holder Name">
-                    </div>
-                    <button class="btn btn-primary" onclick="adminCreateOrder()">Publish Order to Pool</button>
-                </div>
-
-                <h3 style="margin-top: 20px; font-size:16px;">Pending Deposits & UTR Verifications</h3>
-                <div id="adminPendingList" style="margin-top: 10px;"></div>
-
-                <h3 style="margin-top: 20px; font-size:16px;">👥 All Users & Real Balances</h3>
-                <div id="adminUsersList" style="margin-top: 10px; font-size: 13px;"></div>
-
-                <h3 style="margin-top: 20px; font-size:16px;">📋 Complete Transaction History Audit</h3>
-                <div id="adminAuditList" style="margin-top: 10px; font-size: 12px; overflow-x: auto;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FORGOT PASSWORD MODAL -->
-    <div id="forgotModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Reset Password via OTP</h2>
-            <div id="forgotStep1">
-                <div class="form-group">
-                    <label>Registered Mobile Number</label>
-                    <input type="text" id="forgotPhone" placeholder="Enter 10-digit mobile">
-                </div>
-                <button class="btn btn-primary" onclick="sendOtpForForgot()">Send OTP</button>
-                <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeForgotModal()">Cancel</button>
-            </div>
-            <div id="forgotStep2" class="hidden">
-                <div class="form-group">
-                    <label>Enter 4-Digit OTP (Sent to mobile)</label>
-                    <input type="text" id="forgotOtpInput" placeholder="Enter OTP">
-                </div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="newPasswordInput" placeholder="Enter new password">
-                </div>
-                <button class="btn btn-primary" onclick="verifyAndResetPassword()">Verify & Change Password</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- FLOATING TELEGRAM SUPPORT -->
-    <div class="telegram-float" onclick="openTelegramSupport()">📢</div>
-
-    <!-- FOOTER NAV FOR USERS -->
-    <div id="userFooter" class="footer-nav hidden">
-        <div class="footer-item active" onclick="switchTab('home')">🏠 Home</div>
-        <div class="footer-item" onclick="switchTab('deposit')">💳 Deposit</div>
-        <div class="footer-item" onclick="switchTab('orders')">📦 Orders</div>
-        <div class="footer-item" onclick="switchTab('team')">👥 Team</div>
-        <div class="footer-item" onclick="handleLogout()">🚪 Logout</div>
-    </div>
-
-    <!-- TELEGRAM MODAL POPUP -->
-    <div id="tgModal" class="modal hidden">
-        <div class="modal-content" style="text-align: center;">
-            <h2>Official Telegram Update</h2>
-            <p style="margin: 15px 0; font-size: 14px;">Join our official channels for instant updates, proofs, and support!</p>
-            <button class="btn btn-primary" onclick="window.open('https://t.me/+byjidIDYoqZiNzll', '_blank')">Join Main Channel</button>
-            <button class="btn" style="background:#17a2b8; color:#fff;" onclick="window.open('https://t.me/xNekWyb88xtmNThl', '_blank')">Support Channel</button>
-            <button class="btn" style="background:#6c757d; color:#fff;" onclick="closeTgModal()">Proceed to App</button>
-        </div>
-    </div>
-
-    <script>
-        let users = JSON.parse(localStorage.getItem('earx_users')) || [];
-        let transactions = JSON.parse(localStorage.getItem('earx_tx')) || [];
-        let customOrders = JSON.parse(localStorage.getItem('earx_custom_orders')) || [];
-        let currentUser = JSON.parse(localStorage.getItem('earx_current')) || null;
-
-        let defaultUpiList = [
-            { id: '7071087675-3@ybl', holder: 'Admin Node 1' },
-            { id: '7071088675@mbns', holder: 'Admin Node 2' },
-            { id: '7071088675@mbk', holder: 'Admin Node 3' },
-            { id: 'rubeena.rashid@ptyes', holder: 'Rubeena Rashid' }
-        ];
-
-        window.onload = function() {
-            // Check URL query parameters for referral auto-capture
-            const urlParams = new URLSearchParams(window.location.search);
-            const refParam = urlParams.get('ref');
-            if(refParam) {
-                localStorage.setItem('earx_ref', refParam);
-                switchAuth('signup');
-            }
-
-            if (currentUser) {
-                if (currentUser.isAdmin) {
-                    showAdminPanel();
-                } else {
-                    showUserDashboard();
-                    switchTab('home');
-                }
-            }
-            setTimeout(() => {
-                document.getElementById('tgModal').classList.remove('hidden');
-            }, 1000);
-        };
-
-        function switchAuth(type) {
-            if(type === 'login') {
-                document.getElementById('loginForm').classList.remove('hidden');
-                document.getElementById('signupForm').classList.add('hidden');
-                document.querySelectorAll('.nav-tab')[0].classList.add('active');
-                document.querySelectorAll('.nav-tab')[1].classList.remove('active');
-            } else {
-                document.getElementById('loginForm').classList.add('hidden');
-                document.getElementById('signupForm').classList.remove('hidden');
-                document.querySelectorAll('.nav-tab')[1].classList.add('active');
-                document.querySelectorAll('.nav-tab')[0].classList.remove('active');
-                
-                let savedRef = localStorage.getItem('earx_ref');
-                if(savedRef && document.getElementById('signupRef')) {
-                    document.getElementById('signupRef').value = savedRef;
-                }
-            }
-        }
-
-        function handleLogin() {
-            let id = document.getElementById('loginId').value.trim();
-            let pass = document.getElementById('loginPass').value.trim();
-
-            if (id === '7071088675' && pass === 'faraz0826390284770847') {
-                currentUser = { phone: '7071088675', isAdmin: true, balance: 0, upis: [] };
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
-                showAdminPanel();
-                return;
-            }
-
-            let found = users.find(u => (u.phone === id || u.userId == id) && u.pass === pass);
-            if (found) {
-                currentUser = found;
-                if(!currentUser.upis) currentUser.upis = [];
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
-                showUserDashboard();
-                switchTab('home');
-            } else {
-                alert('Invalid mobile number/ID or password!');
-            }
-        }
-
-        function handleSignup() {
-            let phone = document.getElementById('signupPhone').value.trim();
-            let pass = document.getElementById('signupPass').value.trim();
-            let ref = document.getElementById('signupRef').value.trim();
-
-            if (phone.length < 10 || pass.length < 4) {
-                alert('Please enter a valid 10-digit mobile number and secure password.');
-                return;
-            }
-
-            // Check if account already exists for this number
-            if (users.some(u => u.phone === phone)) {
-                alert('An account with this mobile number already exists! Please login.');
-                switchAuth('login');
-                return;
-            }
-
-            let newUser = {
-                phone: phone,
-                pass: pass,
-                userId: Math.floor(100000 + Math.random() * 900000),
-                balance: 99.00, // 99 INR New User Signup Bonus
-                upis: [],
-                refCode: ref,
-                joinedDate: new Date().toLocaleDateString()
-            };
-
-            users.push(newUser);
-            localStorage.setItem('earx_users', JSON.stringify(users));
-            currentUser = newUser;
-            localStorage.setItem('earx_current', JSON.stringify(currentUser));
-            
-            alert('Account created successfully with ₹99 Bonus!');
-            showUserDashboard();
-            switchTab('home');
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('earx_current');
-            currentUser = null;
-            location.reload();
-        }
-
-        function showUserDashboard() {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('userDashboard').classList.remove('hidden');
-            document.getElementById('userFooter').classList.remove('hidden');
-            document.getElementById('userWalletBal').innerText = `₹${currentUser.balance.toFixed(2)}`;
-            document.getElementById('displayUserId').innerText = `ID: ${currentUser.userId}`;
-        }
-
-        function showAdminPanel() {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('userDashboard').classList.add('hidden');
-            document.getElementById('userFooter').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            renderAdminData();
-        }
-
-        let currentOrderTier = 'tier1';
-        function switchTab(tab) {
-            let contentHtml = '';
-            let tabs = document.querySelectorAll('.footer-item');
-            tabs.forEach(t => t.classList.remove('active'));
-
-            if (tab === 'home' || tab === 'orders') {
-                contentHtml = `
-                    <div class="card">
-                        <h2>📦 Live Rotating Escrow Orders (4% Revenue)</h2>
-                        <div class="order-tier-tabs">
-                            <button class="order-tier-btn ${currentOrderTier==='tier1'?'active':''}" onclick="setOrderTier('tier1', 100, 500)">100 - 500 INR</button>
-                            <button class="order-tier-btn ${currentOrderTier==='tier2'?'active':''}" onclick="setOrderTier('tier2', 500, 1000)">500 - 1000 INR</button>
-                            <button class="order-tier-btn ${currentOrderTier==='tier3'?'active':''}" onclick="setOrderTier('tier3', 1000, 1500)">1000 - 1500 INR</button>
-                            <button class="order-tier-btn ${currentOrderTier==='tier4'?'active':''}" onclick="setOrderTier('tier4', 1500, 2000)">1500 - 2000 INR</button>
-                            <button class="order-tier-btn ${currentOrderTier==='tier5'?'active':''}" onclick="setOrderTier('tier5', 2000, 5000)">2000 - 5000 INR</button>
-                        </div>
-                        <p style="font-size:12px; color:#666; margin-bottom:10px;">Select an order below. Every order guarantees 4% revenue return!</p>
-                        <div id="orderListContainer"></div>
-                    </div>
-                `;
-                setTimeout(() => loadOrderList(100, 500), 50);
-            } else if (tab === 'deposit') {
-                contentHtml = `
-                    <div class="card">
-                        <h2>💳 Deposit Funds (Escrow Gateway)</h2>
-                        <p style="font-size:11px; color:#666; margin-bottom:10px;">Platform Processing Fee/Tax: 0.01% to 1% applicable.</p>
-                        <div class="form-group">
-                            <label>Deposit Amount (INR)</label>
-                            <input type="number" id="depAmount" placeholder="Enter amount">
-                        </div>
-                        <div class="form-group">
-                            <label>Target UPI ID to Pay</label>
-                            <select id="depUpiTarget">
-                                ${getAvailableUpiOptions().map(u => `<option value="${u.id}">${u.id} (${u.holder})</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Enter UTR / Transaction ID</label>
-                            <input type="number" id="depUtr" placeholder="12-digit UTR number">
-                        </div>
-                        <button class="btn btn-primary" onclick="submitDepositProof()">Submit Verification Proof</button>
-                    </div>
-                `;
-            } else if (tab === 'upiManager') {
-                contentHtml = `
-                    <div class="card">
-                        <h2>🔗 Link Valid UPI ID</h2>
-                        <p style="font-size:12px; color:#666; margin-bottom:15px;">Only valid UPI handles (e.g. mobile@paytm, name@ybl) are permitted and activated.</p>
-                        <div class="form-group">
-                            <label>Account Holder Name</label>
-                            <input type="text" id="upiHolderName" placeholder="As per bank/UPI">
-                        </div>
-                        <div class="form-group">
-                            <label>UPI ID (e.g. mobile@paytm)</label>
-                            <input type="text" id="newUpiIdInput" placeholder="Enter valid UPI handle">
-                        </div>
-                        <button class="btn btn-primary" onclick="saveUserUpiId()">Save & Activate UPI</button>
-                        
-                        <h3 style="margin-top:20px; font-size:16px;">Linked & Active UPIs (${currentUser.upis ? currentUser.upis.length : 0}/4)</h3>
-                        <div id="linkedUpiList" style="margin-top:10px;"></div>
-                    </div>
-                `;
-                setTimeout(renderLinkedUpis, 50);
-            } else if (tab === 'team') {
-                contentHtml = `
-                    <div class="card" style="text-align:center;">
-                        <h2>👥 Referral & Team Network</h2>
-                        <p style="font-size:13px; color:#666; margin:10px 0;">Invite friends and earn 1% commission on every deposit they make!</p>
-                        <div style="background:#e9ecef; padding:10px; border-radius:6px; font-weight:bold; margin:15px 0; font-size:12px; word-break:break-all;">
-                            https://earxpro.netlify.app/?ref=${currentUser.userId}
-                        </div>
-                        <button class="btn btn-primary" onclick="copyReferralLink()">Copy Invite Link</button>
-                    </div>
-                `;
-            }
-
-            document.getElementById('tabContent').innerHTML = contentHtml;
-        }
-
-        function setOrderTier(tierKey, min, max) {
-            currentOrderTier = tierKey;
-            let btns = document.querySelectorAll('.order-tier-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            loadOrderList(min, max);
-        }
-
-        function copyReferralLink() {
-            let link = `https://earxpro.netlify.app/?ref=${currentUser.userId}`;
-            navigator.clipboard.writeText(link);
-            alert('Referral link copied to clipboard!');
-        }
-
-        function saveUserUpiId() {
-            if(!currentUser.upis) currentUser.upis = [];
-            if(currentUser.upis.length >= 4) {
-                alert('Maximum limit reached! You can only add up to 4 UPI IDs.');
-                return;
-            }
-            let holder = document.getElementById('upiHolderName').value.trim();
-            let upiId = document.getElementById('newUpiIdInput').value.trim();
-
-            if(!holder || !upiId) {
-                alert('Please fill out all fields.');
-                return;
-            }
-
-            // Strict UPI validation check
-            let upiRegex = /^[\w.-]+@[\w.-]+$/;
-            if(!upiRegex.test(upiId)) {
-                alert('Invalid UPI ID format! Please enter a valid UPI handle (e.g., number@paytm or name@oksbi).');
-                return;
-            }
-
-            currentUser.upis.push({ holder, id: upiId, status: 'Active (Verified)' });
-            updateUserStorage();
-            alert('Valid UPI ID successfully linked and activated!');
-            switchTab('upiManager');
-        }
-
-        function renderLinkedUpis() {
-            let container = document.getElementById('linkedUpiList');
-            if(!container) return;
-            if(!currentUser.upis || currentUser.upis.length === 0) {
-                container.innerHTML = '<p style="font-size:13px; color:#888;">No UPI IDs linked yet.</p>';
-                return;
-            }
-            container.innerHTML = currentUser.upis.map((u) => `
-                <div class="order-item">
-                    <div><strong>${u.id}</strong><br><small>${u.holder}</small></div>
-                    <span style="color:var(--accent); font-weight:bold;">${u.status}</span>
-                </div>
-            `).join('');
-        }
-
-        function getAvailableUpiOptions() {
-            let allSystemUpis = [...defaultUpiList];
-            customOrders.forEach(o => {
-                allSystemUpis.push({ id: o.upi, holder: o.holder });
-            });
-            users.forEach(u => {
-                if(u.phone !== currentUser.phone && u.upis) {
-                    u.upis.forEach(upi => {
-                        allSystemUpis.push({ id: upi.id, holder: upi.holder });
-                    });
-                }
-            });
-            let userOwnUpiIds = currentUser.upis ? currentUser.upis.map(u => u.id) : [];
-            return allSystemUpis.filter(u => !userOwnUpiIds.includes(u.id));
-        }
-
-        function loadOrderList(minAmt, maxAmt) {
-            let container = document.getElementById('orderListContainer');
-            if(!container) return;
-            
-            let availableUpis = getAvailableUpiOptions();
-            if(availableUpis.length === 0) {
-                container.innerHTML = '<p style="font-size:13px; color:#888; text-align:center;">No payment nodes available right now.</p>';
-                return;
-            }
-
-            // Generate sample dynamic orders within the selected range
-            let sampleOrders = [
-                { amt: minAmt + 50, upi: availableUpis[0 % availableUpis.length] },
-                { amt: Math.floor((minAmt + maxAmt) / 2), upi: availableUpis[1 % availableUpis.length] },
-                { amt: maxAmt - 50, upi: availableUpis[2 % availableUpis.length] }
-            ];
-
-            container.innerHTML = sampleOrders.map(o => `
-                <div class="order-item" style="flex-direction: column; align-items: flex-start;">
-                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>Escrow Order ₹${o.amt}</strong><br>
-                            <small>Target UPI: ${o.upi.id} (${o.upi.holder})</small>
-                        </div>
-                        <button class="btn-primary" style="padding:6px 12px; border:none; border-radius:4px; cursor:pointer;" onclick="takeOrder(${o.amt}, '${o.upi.id}')">Take Order</button>
-                    </div>
-                    <div style="margin-top: 6px; font-size: 11px; color: var(--accent); font-weight: bold;">
-                        This Order revenue 4%
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function takeOrder(amount, targetUpi) {
-            if(currentUser.balance < amount) {
-                alert(`Insufficient wallet balance (₹${currentUser.balance}) for this order. Please deposit funds first.`);
-                switchTab('deposit');
-                return;
-            }
-
-            let taxPercent = (Math.random() * (1.0 - 0.01) + 0.01);
-            let taxFee = (amount * taxPercent) / 100;
-            let netCreditable = amount - taxFee;
-
-            let tx = {
-                id: 'TXN' + Math.floor(100000 + Math.random() * 900000),
-                userPhone: currentUser.phone,
-                userId: currentUser.userId,
-                userName: 'User ' + currentUser.userId,
-                amount: amount,
-                taxFee: taxFee,
-                netCreditable: netCreditable,
-                targetUpi: targetUpi,
-                utr: '',
-                status: 'Pending Verification',
-                timestamp: new Date().toLocaleString()
-            };
-            transactions.push(tx);
-            localStorage.setItem('earx_tx', JSON.stringify(transactions));
-            
-            let utrInput = prompt(`Pay ₹${amount} via Paytm/PhonePe/GPay to UPI: ${targetUpi}\nEnter 12-digit UTR/Transaction ID:`);
-            if(utrInput) {
-                tx.utr = utrInput;
-                localStorage.setItem('earx_tx', JSON.stringify(transactions));
-                alert('Deposit proof and UTR submitted to Admin Panel!');
-                switchTab('orders');
-            }
-        }
-
-        function submitDepositProof() {
-            let amount = parseFloat(document.getElementById('depAmount').value);
-            let targetUpi = document.getElementById('depUpiTarget').value;
-            let utr = document.getElementById('depUtr').value.trim();
-
-            if(!amount || !utr) {
-                alert('Please enter valid amount and UTR.');
-                return;
-            }
-
-            let taxPercent = (Math.random() * (1.0 - 0.01) + 0.01);
-            let taxFee = (amount * taxPercent) / 100;
-            let netCreditable = amount - taxFee;
-
-            let tx = {
-                id: 'TXN' + Math.floor(100000 + Math.random() * 900000),
-                userPhone: currentUser.phone,
-                userId: currentUser.userId,
-                userName: 'User ' + currentUser.userId,
-                amount: amount,
-                taxFee: taxFee,
-                netCreditable: netCreditable,
-                targetUpi: targetUpi,
-                utr: utr,
-                status: 'Pending Verification',
-                timestamp: new Date().toLocaleString()
-            };
-
-            transactions.push(tx);
-            localStorage.setItem('earx_tx', JSON.stringify(transactions));
-            alert(`Deposit submitted successfully! (Tax Fee: ₹${taxFee.toFixed(2)} deducted). Awaiting Admin approval.`);
-            switchTab('orders');
-        }
-
-        function adminCreateOrder() {
-            let amt = parseFloat(document.getElementById('adminOrderAmt').value);
-            let upi = document.getElementById('adminOrderUpi').value.trim();
-            let holder = document.getElementById('adminOrderHolder').value.trim();
-
-            if(!amt || !upi || !holder) {
-                alert('Please fill all fields for custom order.');
-                return;
-            }
-
-            customOrders.push({ amount: amt, upi: upi, holder: holder });
-            localStorage.setItem('earx_custom_orders', JSON.stringify(customOrders));
-            alert('Custom order successfully published to order pool!');
-            document.getElementById('adminOrderAmt').value = '';
-            document.getElementById('adminOrderUpi').value = '';
-            document.getElementById('adminOrderHolder').value = '';
-            renderAdminData();
-        }
-
-        function renderAdminData() {
-            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
-            let allUsers = JSON.parse(localStorage.getItem('earx_users')) || [];
-            
-            let statsContainer = document.getElementById('adminStatsContainer');
-            let pendingContainer = document.getElementById('adminPendingList');
-            let usersContainer = document.getElementById('adminUsersList');
-            let auditContainer = document.getElementById('adminAuditList');
-
-            let totalDepositedAmt = txs.filter(t => t.status === 'Approved & Settled').reduce((sum, t) => sum + t.amount, 0);
-
-            statsContainer.innerHTML = `
-                <div class="stat-box"><strong>Total Signups:</strong><br>${allUsers.length}</div>
-                <div class="stat-box"><strong>Total Deposits:</strong><br>₹${totalDepositedAmt}</div>
-            `;
-
-            let pendingTxs = txs.filter(t => t.status === 'Pending Verification');
-            if(pendingTxs.length === 0) {
-                pendingContainer.innerHTML = '<p style="font-size:13px; color:#888;">No pending verification requests.</p>';
-            } else {
-                pendingContainer.innerHTML = pendingTxs.map(t => `
-                    <div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:8px; font-size:13px;">
-                        <strong>User ID:</strong> ${t.userId} (Phone: ${t.userPhone})<br>
-                        <strong>Amount:</strong> ₹${t.amount} | <strong>Tax Fee:</strong> ₹${t.taxFee ? t.taxFee.toFixed(2) : '0.00'}<br>
-                        <strong>Target UPI:</strong> ${t.targetUpi} <br>
-                        <strong>UTR / TxID:</strong> <span style="color:red; font-weight:bold;">${t.utr || 'N/A'}</span><br>
-                        <button class="btn btn-primary" style="padding:6px; margin-top:5px;" onclick="adminApproveTx('${t.id}')">Approve & Settle Workflow</button>
-                    </div>
-                `).join('');
-            }
-
-            usersContainer.innerHTML = allUsers.map(u => `
-                <div style="background:#fff; border:1px solid #ddd; padding:8px; border-radius:6px; margin-bottom:6px;">
-                    <strong>Phone:</strong> ${u.phone} | <strong>ID:</strong> ${u.userId}<br>
-                    <strong>Real Balance:</strong> ₹${u.balance.toFixed(2)} | <strong>UPIs Linked:</strong> ${u.upis ? u.upis.length : 0}
-                </div>
-            `).join('');
-
-            if(txs.length === 0) {
-                auditContainer.innerHTML = '<p style="font-size:12px; color:#888;">No transaction history available yet.</p>';
-            } else {
-                auditContainer.innerHTML = `
-                    <table style="width:100%; border-collapse: collapse; background:#fff;">
-                        <thead>
-                            <tr style="background:#0a3622; color:#fff; text-align:left;">
-                                <th style="padding:6px;">ID</th>
-                                <th style="padding:6px;">User</th>
-                                <th style="padding:6px;">Amt</th>
-                                <th style="padding:6px;">UTR</th>
-                                <th style="padding:6px;">Target UPI</th>
-                                <th style="padding:6px;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${txs.map(t => `
-                                <tr style="border-bottom:1px solid #ddd;">
-                                    <td style="padding:6px;">${t.id}</td>
-                                    <td style="padding:6px;">${t.userId}</td>
-                                    <td style="padding:6px;">₹${t.amount}</td>
-                                    <td style="padding:6px; font-weight:bold; color:#d9534f;">${t.utr || 'Pending'}</td>
-                                    <td style="padding:6px;">${t.targetUpi}</td>
-                                    <td style="padding:6px; font-weight:bold;">${t.status}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
-        function adminApproveTx(txId) {
-            let txs = JSON.parse(localStorage.getItem('earx_tx')) || [];
-            let tx = txs.find(t => t.id === txId);
-            if(!tx) return;
-
-            tx.status = 'Approved & Settled';
-            localStorage.setItem('earx_tx', JSON.stringify(txs));
-
-            let targetUser = users.find(u => u.phone === tx.userPhone);
-            if(targetUser) {
-                let creditAmount = tx.netCreditable ? tx.netCreditable : tx.amount;
-                let bonus = creditAmount * 0.042;
-                targetUser.balance += (creditAmount + bonus);
-
-                // Check referral sponsor and reward 1% commission
-                if(targetUser.refCode) {
-                    let sponsor = users.find(u => u.userId == targetUser.refCode);
-                    if(sponsor) {
-                        let refBonus = tx.amount * 0.01;
-                        sponsor.balance += refBonus;
-                    }
-                }
-
-                localStorage.setItem('earx_users', JSON.stringify(users));
-            }
-
-            alert(`Transaction ${txId} approved successfully! Balance credited with bonus & referral commission.`);
-            renderAdminData();
-        }
-
-        // Forgot password workflow
-        function openForgotPassword() {
-            document.getElementById('forgotModal').classList.remove('hidden');
-            document.getElementById('forgotStep1').classList.remove('hidden');
-            document.getElementById('forgotStep2').classList.add('hidden');
-        }
-
-        function closeForgotModal() {
-            document.getElementById('forgotModal').classList.add('hidden');
-        }
-
-        let tempForgotPhone = '';
-        function sendOtpForForgot() {
-            let phone = document.getElementById('forgotPhone').value.trim();
-            let found = users.find(u => u.phone === phone);
-            if(!found) {
-                alert('Mobile number not registered in our system!');
-                return;
-            }
-            tempForgotPhone = phone;
-            alert('Simulation: Your 4-digit OTP is 5678');
-            document.getElementById('forgotStep1').classList.add('hidden');
-            document.getElementById('forgotStep2').classList.remove('hidden');
-        }
-
-        function verifyAndResetPassword() {
-            let otp = document.getElementById('forgotOtpInput').value.trim();
-            let newPass = document.getElementById('newPasswordInput').value.trim();
-
-            if(otp !== '5678') {
-                alert('Invalid OTP! Please enter 5678.');
-                return;
-            }
-            if(newPass.length < 4) {
-                alert('Password must be at least 4 characters.');
-                return;
-            }
-
-            let uIndex = users.findIndex(u => u.phone === tempForgotPhone);
-            if(uIndex !== -1) {
-                users[uIndex].pass = newPass;
-                localStorage.setItem('earx_users', JSON.stringify(users));
-                alert('Password successfully reset! You can now login with your new password.');
-                closeForgotModal();
-                switchAuth('login');
-            }
-        }
-
-        function updateUserStorage() {
-            let idx = users.findIndex(u => u.phone === currentUser.phone);
-            if(idx !== -1) {
-                users[idx] = currentUser;
-                localStorage.setItem('earx_users', JSON.stringify(users));
-                localStorage.setItem('earx_current', JSON.stringify(currentUser));
+                setStoredData('earx_users', users);
+                setStoredData('earx_current', currentUser);
             }
         }
 
